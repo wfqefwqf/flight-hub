@@ -252,7 +252,3 @@ flight-hub.db
 5. 更完整的 X-Plane 接入方案
 
 ---
-
-## 备注
-
-`OpenFrequency/` 目录仅作为参考项目存在，不纳入当前仓库功能范围。
