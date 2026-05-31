@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Box, Button, Grid2 as Grid, Stack, TextField, Typography } from '@mui/material';
 import type { DispatchFlight, FlightHubSnapshot } from '@shared/types';
 import { GlassCard } from '../components/ui/GlassCard';
 
@@ -38,15 +39,7 @@ export function DispatchPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
 
   const importSimBrief = async () => {
     try {
-      const draft = await window.flightHub.importSimBrief({
-        flightNumber: form.flightNumber,
-        departure: form.departure,
-        arrival: form.arrival,
-        alternate: form.alternate,
-        route: form.route,
-        payloadKg: form.payloadKg,
-        fuelKg: form.fuelKg
-      });
+      const draft = await window.flightHub.importSimBrief(form);
       setForm(draft);
       setMessage('已创建 SimBrief 来源的签派草稿。');
     } catch (error) {
@@ -79,76 +72,82 @@ export function DispatchPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   };
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
-      <GlassCard title="现有签派">
-        <div className="space-y-3">
-          <button className="w-full rounded-2xl bg-sky-400/20 px-4 py-3 text-sm text-sky-200" onClick={newDraft}>新建签派草稿</button>
-          {snapshot.dispatches.length > 0 ? (
-            snapshot.dispatches.map((dispatch) => (
-              <button
-                key={dispatch.id}
-                className="flex w-full items-center justify-between rounded-2xl bg-white/5 p-4 text-left hover:bg-white/10"
-                onClick={() => setForm(dispatch)}
-              >
-                <div>
-                  <div className="font-medium">{dispatch.flightNumber || '未命名航班'}</div>
-                  <div className="text-sm text-slate-400">{dispatch.departure || '----'} → {dispatch.arrival || '----'}</div>
-                </div>
-                <div className="text-xs text-slate-400">{dispatch.status}</div>
-              </button>
-            ))
-          ) : (
-            <div className="rounded-2xl bg-white/5 p-4 text-sm text-slate-400">当前还没有真实签派记录。请新建或导入一份草稿。</div>
-          )}
-        </div>
-      </GlassCard>
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, xl: 4 }}>
+        <GlassCard title="现有签派">
+          <Stack spacing={2}>
+            <Button onClick={newDraft}>新建签派草稿</Button>
+            {snapshot.dispatches.length > 0 ? (
+              snapshot.dispatches.map((dispatch) => (
+                <Button
+                  key={dispatch.id}
+                  variant="outlined"
+                  color="inherit"
+                  sx={{ justifyContent: 'space-between', p: 2, borderRadius: 4 }}
+                  onClick={() => setForm(dispatch)}
+                >
+                  <Box sx={{ textAlign: 'left' }}>
+                    <Typography fontWeight={700}>{dispatch.flightNumber || '未命名航班'}</Typography>
+                    <Typography variant="body2" color="text.secondary">{dispatch.departure || '----'} → {dispatch.arrival || '----'}</Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">{dispatch.status}</Typography>
+                </Button>
+              ))
+            ) : (
+              <Typography color="text.secondary">当前还没有真实签派记录。请新建或导入一份草稿。</Typography>
+            )}
+          </Stack>
+        </GlassCard>
+      </Grid>
 
-      <GlassCard title="签派编辑器" extra={message ? <span className="text-xs text-sky-300">{message}</span> : undefined}>
-        <div className="grid gap-4 md:grid-cols-2">
-          {[
-            ['flightNumber', '航班号'],
-            ['departure', '起飞机场'],
-            ['arrival', '目的机场'],
-            ['alternate', '备降机场'],
-            ['simbriefUsername', 'SimBrief 用户名'],
-            ['simbriefUserId', 'SimBrief 用户 ID'],
-            ['simbriefNavlogId', 'SimBrief Navlog ID'],
-            ['pilotMemberId', '成员 ID'],
-            ['fleetAircraftId', '机队 ID']
-          ].map(([key, label]) => (
-            <label key={key} className="space-y-2 text-sm">
-              <span className="text-slate-400">{label}</span>
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none"
-                value={(form as any)[key] ?? ''}
-                onChange={(e) => update(key as keyof DispatchFlight, e.target.value as any)}
+      <Grid size={{ xs: 12, xl: 8 }}>
+        <GlassCard title="签派编辑器" extra={message ? <Typography variant="caption" color="primary.main">{message}</Typography> : undefined}>
+          <Grid container spacing={2}>
+            {[
+              ['flightNumber', '航班号'],
+              ['departure', '起飞机场'],
+              ['arrival', '目的机场'],
+              ['alternate', '备降机场'],
+              ['simbriefUsername', 'SimBrief 用户名'],
+              ['simbriefUserId', 'SimBrief 用户 ID'],
+              ['simbriefNavlogId', 'SimBrief Navlog ID'],
+              ['pilotMemberId', '成员 ID'],
+              ['fleetAircraftId', '机队 ID']
+            ].map(([key, label]) => (
+              <Grid key={key} size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label={label}
+                  fullWidth
+                  value={(form as any)[key] ?? ''}
+                  onChange={(e) => update(key as keyof DispatchFlight, e.target.value as any)}
+                />
+              </Grid>
+            ))}
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                label="航路"
+                fullWidth
+                multiline
+                minRows={4}
+                value={form.route}
+                onChange={(e) => update('route', e.target.value)}
               />
-            </label>
-          ))}
-          <label className="space-y-2 text-sm md:col-span-2">
-            <span className="text-slate-400">航路</span>
-            <textarea
-              className="min-h-28 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none"
-              value={form.route}
-              onChange={(e) => update('route', e.target.value)}
-            />
-          </label>
-          <label className="space-y-2 text-sm">
-            <span className="text-slate-400">业载 kg</span>
-            <input className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white" type="number" value={form.payloadKg} onChange={(e) => update('payloadKg', Number(e.target.value))} />
-          </label>
-          <label className="space-y-2 text-sm">
-            <span className="text-slate-400">燃油 kg</span>
-            <input className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white" type="number" value={form.fuelKg} onChange={(e) => update('fuelKg', Number(e.target.value))} />
-          </label>
-        </div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField label="业载 kg" fullWidth type="number" value={form.payloadKg} onChange={(e) => update('payloadKg', Number(e.target.value))} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField label="燃油 kg" fullWidth type="number" value={form.fuelKg} onChange={(e) => update('fuelKg', Number(e.target.value))} />
+            </Grid>
+          </Grid>
 
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button className="rounded-2xl bg-sky-400/20 px-4 py-3 text-sm text-sky-200" onClick={importSimBrief}>导入 SimBrief 草稿</button>
-          <button className="rounded-2xl bg-white/10 px-4 py-3 text-sm" onClick={save}>保存签派</button>
-          <button className="rounded-2xl bg-white/10 px-4 py-3 text-sm" onClick={exportJson}>导出 dispatch.json</button>
-        </div>
-      </GlassCard>
-    </div>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 3 }}>
+            <Button onClick={importSimBrief}>导入 SimBrief</Button>
+            <Button variant="outlined" onClick={save}>保存签派</Button>
+            <Button variant="outlined" onClick={exportJson}>导出 dispatch.json</Button>
+          </Stack>
+        </GlassCard>
+      </Grid>
+    </Grid>
   );
 }

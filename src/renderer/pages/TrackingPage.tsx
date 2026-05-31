@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet';
+import { Box, Button, Chip, Grid2 as Grid, Stack, TextField, Typography } from '@mui/material';
 import type { FlightHubSnapshot, SimConnectionConfig, SimSource } from '@shared/types';
 import { GlassCard } from '../components/ui/GlassCard';
 import { StatPill } from '../components/ui/StatPill';
@@ -26,69 +27,66 @@ export function TrackingPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   };
 
   return (
-    <div className="flex h-full flex-col gap-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">航班追踪</h1>
-          <p className="mt-2 text-sm text-slate-400">MSFS 已接入 SimConnect 采样；X-Plane 当前使用本地 UDP 数据输出，需要你在模拟器内开启对应数据发送。</p>
-        </div>
-        <div className="flex gap-2 rounded-2xl bg-white/5 p-1">
+    <Stack spacing={3} sx={{ minHeight: '100%' }}>
+      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
+        <Box>
+          <Typography variant="h4" fontWeight={700}>航班追踪</Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            当前使用 Material Design 3 布局展示 MSFS / X-Plane 实时飞行数据与轨迹。
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1} flexWrap="wrap">
           {(['MSFS', 'XPLANE', 'MOCK'] as SimSource[]).map((source) => (
-            <button
+            <Chip
               key={source}
-              className={`rounded-xl px-4 py-2 text-sm ${tracking.source === source ? 'bg-sky-400/20 text-sky-200' : 'text-slate-300'}`}
+              label={source}
+              color={tracking.source === source ? 'primary' : 'default'}
+              variant={tracking.source === source ? 'filled' : 'outlined'}
               onClick={() => changeSource(source)}
-            >
-              {source}
-            </button>
+            />
           ))}
-        </div>
-      </header>
+        </Stack>
+      </Stack>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
-        <StatPill label="呼号" value={tracking.callsign} />
-        <StatPill label="机型" value={tracking.aircraftType} />
-        <StatPill label="高度" value={`${tracking.position?.altitude ?? 0} ft`} />
-        <StatPill label="地速" value={`${tracking.position?.groundspeed ?? 0} kt`} />
-        <StatPill label="阶段" value={tracking.phase} />
-        <StatPill label="连接状态" value={tracking.status} />
-        <StatPill label="活动会话" value={snapshot.currentSession ? '进行中' : '无'} />
-        <StatPill label="最近 PIREP" value={snapshot.pireps[0]?.flightNumber ?? '无'} />
-      </div>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="呼号" value={tracking.callsign} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="机型" value={tracking.aircraftType} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="高度" value={`${tracking.position?.altitude ?? 0} ft`} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="地速" value={`${tracking.position?.groundspeed ?? 0} kt`} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="阶段" value={tracking.phase} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="连接状态" value={tracking.status} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="活动会话" value={snapshot.currentSession ? '进行中' : '无'} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="最近 PIREP" value={snapshot.pireps[0]?.flightNumber ?? '无'} /></Grid>
+      </Grid>
 
-      <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <GlassCard title="连接配置" extra={<span className="text-xs text-slate-400">{tracking.statusMessage}</span>}>
-          <div className="space-y-4">
-            <label className="space-y-2 text-sm">
-              <span className="text-slate-400">MSFS Host</span>
-              <input className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" value={config.msfsHost} onChange={(e) => patch('msfsHost', e.target.value)} />
-            </label>
-            <label className="space-y-2 text-sm">
-              <span className="text-slate-400">MSFS Port</span>
-              <input className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" type="number" value={config.msfsPort} onChange={(e) => patch('msfsPort', Number(e.target.value))} />
-            </label>
-            <label className="space-y-2 text-sm">
-              <span className="text-slate-400">X-Plane UDP 接收端口</span>
-              <input className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3" type="number" value={config.xplaneLocalPort} onChange={(e) => patch('xplaneLocalPort', Number(e.target.value))} />
-            </label>
-            <p className="text-xs leading-6 text-slate-500">提示：当前 X-Plane 方案依赖模拟器主动向本机端口发送 UDP Data Output。</p>
-            <div className="flex flex-col gap-3 pt-2">
-              <button className="rounded-2xl bg-white/10 px-4 py-3 text-sm" onClick={saveConfig}>保存连接配置</button>
-              <button className="rounded-2xl bg-sky-400/20 px-4 py-3 text-sm text-sky-200" onClick={() => changeSource(tracking.source)}>重新连接当前源</button>
-            </div>
-          </div>
-        </GlassCard>
+      <Grid container spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+        <Grid size={{ xs: 12, xl: 4 }}>
+          <GlassCard title="连接配置" extra={<Typography variant="caption" color="text.secondary">{tracking.statusMessage}</Typography>}>
+            <Stack spacing={2}>
+              <TextField label="MSFS Host" value={config.msfsHost} onChange={(e) => patch('msfsHost', e.target.value)} fullWidth />
+              <TextField label="MSFS Port" type="number" value={config.msfsPort} onChange={(e) => patch('msfsPort', Number(e.target.value))} fullWidth />
+              <TextField label="X-Plane UDP 接收端口" type="number" value={config.xplaneLocalPort} onChange={(e) => patch('xplaneLocalPort', Number(e.target.value))} fullWidth />
+              <Typography variant="body2" color="text.secondary">当前 X-Plane 方案依赖模拟器主动发送 UDP Data Output。</Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                <Button onClick={saveConfig}>保存连接配置</Button>
+                <Button variant="outlined" onClick={() => changeSource(tracking.source)}>重新连接当前源</Button>
+              </Stack>
+            </Stack>
+          </GlassCard>
+        </Grid>
 
-        <GlassCard title="地图轨迹" extra={<span className="text-xs text-slate-400">实时更新</span>}>
-          <div className="overflow-hidden rounded-[24px] border border-white/10">
-            <MapContainer center={center} zoom={6} style={{ height: 560, width: '100%' }}>
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
-              <Polyline positions={tracking.track.map((point) => [point.lat, point.lon] as [number, number])} pathOptions={{ color: '#7dd3fc', weight: 4 }} />
-              {tracking.position && <Marker position={[tracking.position.lat, tracking.position.lon]} />}
-            </MapContainer>
-          </div>
-        </GlassCard>
-      </div>
-    </div>
+        <Grid size={{ xs: 12, xl: 8 }}>
+          <GlassCard title="地图轨迹" extra={<Typography variant="caption" color="text.secondary">实时更新</Typography>}>
+            <Box sx={{ overflow: 'hidden', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }}>
+              <MapContainer center={center} zoom={6} style={{ height: 560, width: '100%' }}>
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+                <Polyline positions={tracking.track.map((point) => [point.lat, point.lon] as [number, number])} pathOptions={{ color: '#7fcfff', weight: 4 }} />
+                {tracking.position && <Marker position={[tracking.position.lat, tracking.position.lon]} />}
+              </MapContainer>
+            </Box>
+          </GlassCard>
+        </Grid>
+      </Grid>
+    </Stack>
   );
 }

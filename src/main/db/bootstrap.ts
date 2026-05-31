@@ -6,10 +6,12 @@ type ColumnDefinition = {
   sql: string;
 };
 
+function getTableColumns(db: Database, tableName: string) {
+  return db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+}
+
 function ensureColumns(db: Database, tableName: string, columns: ColumnDefinition[]) {
-  const existing = db
-    .prepare(`PRAGMA table_info(${tableName})`)
-    .all() as Array<{ name: string }>;
+  const existing = getTableColumns(db, tableName);
   const existingNames = new Set(existing.map((column) => column.name));
 
   for (const column of columns) {
@@ -17,6 +19,45 @@ function ensureColumns(db: Database, tableName: string, columns: ColumnDefinitio
       db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${column.sql}`);
     }
   }
+}
+
+function ensureModernPirepsTable(db: Database) {
+  const columns = getTableColumns(db, 'pireps');
+  const columnNames = new Set(columns.map((column) => column.name));
+
+  if (!columnNames.has('data')) return;
+
+  db.exec(`
+    ALTER TABLE pireps RENAME TO pireps_legacy;
+
+    CREATE TABLE pireps (
+      id TEXT PRIMARY KEY,
+      session_id TEXT,
+      flight_number TEXT NOT NULL,
+      departure TEXT NOT NULL,
+      arrival TEXT NOT NULL,
+      block_time_minutes INTEGER NOT NULL,
+      fuel_used_kg REAL NOT NULL,
+      landing_rate_fpm REAL NOT NULL,
+      notes TEXT,
+      submitted_at TEXT NOT NULL
+    );
+
+    INSERT INTO pireps (id, submitted_at, flight_number, departure, arrival, block_time_minutes, fuel_used_kg, landing_rate_fpm, notes)
+    SELECT
+      id,
+      COALESCE(submitted_at, ''),
+      COALESCE(flight_number, ''),
+      COALESCE(departure, ''),
+      COALESCE(arrival, ''),
+      COALESCE(block_time_minutes, 0),
+      COALESCE(fuel_used_kg, 0),
+      COALESCE(landing_rate_fpm, 0),
+      notes
+    FROM pireps_legacy;
+
+    DROP TABLE pireps_legacy;
+  `);
 }
 
 export function bootstrapDatabase(userDataPath: string) {
@@ -119,6 +160,8 @@ export function bootstrapDatabase(userDataPath: string) {
       vertical_speed_fpm REAL
     );
   `);
+
+  ensureModernPirepsTable(db);
 
   ensureColumns(db, 'dispatches', [
     { name: 'flight_number', sql: 'flight_number TEXT NOT NULL DEFAULT ""' },

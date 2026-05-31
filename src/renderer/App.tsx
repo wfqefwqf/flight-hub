@@ -1,6 +1,22 @@
 import { useEffect } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
-import { Plane, Radio, ScrollText, Users, Volume2 } from 'lucide-react';
+import FlightIcon from '@mui/icons-material/Flight';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
+import DescriptionIcon from '@mui/icons-material/Description';
+import GroupsIcon from '@mui/icons-material/Groups';
+import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatReclineNormal';
+import {
+  Box,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  AppBar,
+  Stack
+} from '@mui/material';
 import { useAppStore } from './store/useAppStore';
 import { TrackingPage } from './pages/TrackingPage';
 import { CabinPage } from './pages/CabinPage';
@@ -10,22 +26,22 @@ import { DashboardPage } from './pages/DashboardPage';
 import { DispatchPage } from './pages/DispatchPage';
 import { ManagementPage } from './pages/ManagementPage';
 
+const drawerWidth = 280;
+
 const navItems = [
-  { to: '/', label: '总览', icon: Plane },
-  { to: '/tracking', label: '航班追踪', icon: Radio },
-  { to: '/dispatch', label: '签派', icon: ScrollText },
-  { to: '/pirep', label: 'PIREP', icon: ScrollText },
-  { to: '/management', label: '成员/机队', icon: Users },
-  { to: '/cabin', label: '客舱语音', icon: Volume2 }
+  { to: '/', label: '总览', icon: <FlightIcon /> },
+  { to: '/tracking', label: '航班追踪', icon: <GraphicEqIcon /> },
+  { to: '/dispatch', label: '签派', icon: <DescriptionIcon /> },
+  { to: '/pirep', label: 'PIREP', icon: <DescriptionIcon /> },
+  { to: '/management', label: '成员 / 机队', icon: <GroupsIcon /> },
+  { to: '/cabin', label: '客舱语音', icon: <AirlineSeatReclineNormalIcon /> }
 ];
 
 export default function App() {
   const { snapshot, loading, error, setSnapshot, setError, patchTracking } = useAppStore();
 
   useEffect(() => {
-    if (!window.flightHub) {
-      return;
-    }
+    if (!window.flightHub) return;
 
     let mounted = true;
 
@@ -46,46 +62,29 @@ export default function App() {
   }, [setSnapshot, setError, patchTracking]);
 
   return (
-    <div className="flex h-screen gap-6 overflow-hidden p-6 text-slate-100">
-      <aside className="flex w-64 shrink-0 flex-col rounded-[28px] border border-white/8 bg-slate-950/70 p-5 shadow-glass backdrop-blur-xl">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-400/20 text-sky-300">
-            <Plane size={24} />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">Flight Hub</h1>
-            <p className="text-xs text-slate-400">Flight Operations Companion</p>
-          </div>
-        </div>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppBar position="fixed" color="transparent" elevation={0} sx={{ height: 16, backdropFilter: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'background.default', ml: `${drawerWidth}px`, width: `calc(100% - ${drawerWidth}px)` }} />
 
-        <nav className="space-y-2">
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
-                  isActive ? 'bg-white/12 text-white' : 'text-slate-300 hover:bg-white/5'
-                }`
-              }
-            >
-              <Icon size={18} />
-              <span>{label}</span>
+      <Drawer variant="permanent" sx={{ width: drawerWidth, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box', borderRight: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.paper', pt: 2 } }}>
+        <List sx={{ px: 1.5 }}>
+          {navItems.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.to === '/'} style={{ textDecoration: 'none', color: 'inherit' }}>
+              {({ isActive }) => (
+                <ListItemButton sx={{ mb: 1, borderRadius: 4, bgcolor: isActive ? 'rgba(127,207,255,0.16)' : 'transparent' }}>
+                  <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'text.secondary', minWidth: 40 }}>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: isActive ? 700 : 500 }} />
+                </ListItemButton>
+              )}
             </NavLink>
           ))}
-        </nav>
-      </aside>
+        </List>
+      </Drawer>
 
-      <main className="flex-1 overflow-y-auto rounded-[32px] border border-white/8 bg-slate-900/45 p-6 shadow-glass backdrop-blur-xl">
+      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 2, minWidth: 0 }}>
         {loading || !snapshot ? (
-          <div className="flex h-full min-h-[60vh] items-center justify-center text-slate-400">
-            {error
-              ? `加载失败：${error}`
-              : window.flightHub
-                ? 'Loading Flight Hub...'
-                : '请通过 Electron 启动本应用，浏览器直开仅用于前端调试。'}
-          </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: 'text.secondary' }}>
+            {error ? `加载失败：${error}` : window.flightHub ? 'Loading Flight Hub...' : '请通过 Electron 启动本应用，浏览器直开仅用于前端调试。'}
+          </Box>
         ) : (
           <Routes>
             <Route path="/" element={<DashboardPage snapshot={snapshot} />} />
@@ -97,7 +96,7 @@ export default function App() {
             <Route path="/availability" element={<AvailabilityPage snapshot={snapshot} />} />
           </Routes>
         )}
-      </main>
-    </div>
+      </Box>
+    </Box>
   );
 }

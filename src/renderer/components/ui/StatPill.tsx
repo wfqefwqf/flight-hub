@@ -1,8 +1,16 @@
+import { Card, CardContent, Typography } from '@mui/material';
+
 export function StatPill({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
-      <div className="text-xs text-slate-400">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-white">{value}</div>
-    </div>
+    <Card elevation={0} sx={{ borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <CardContent sx={{ p: 2.25, '&:last-child': { pb: 2.25 } }}>
+        <Typography variant="body2" color="text.secondary">
+          {label}
+        </Typography>
+        <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 700 }}>
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
   );
 }

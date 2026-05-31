@@ -19,6 +19,10 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^6.1.5",
+    "@mui/material": "^6.1.5",
     "@reduxjs/toolkit": "^2.2.7",
     "better-sqlite3": "^11.1.2",
     "clsx": "^2.1.1",

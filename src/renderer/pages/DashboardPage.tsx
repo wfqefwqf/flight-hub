@@ -1,3 +1,4 @@
+import { Box, Grid2 as Grid, Stack, Typography } from '@mui/material';
 import type { FlightHubSnapshot } from '@shared/types';
 import { GlassCard } from '../components/ui/GlassCard';
 import { StatPill } from '../components/ui/StatPill';
@@ -7,75 +8,81 @@ export function DashboardPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   const { dashboard, tracking, currentSession } = snapshot;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold">运行总览</h1>
-        <p className="mt-2 text-sm text-slate-400">只展示当前已经落到真实数据库的会话与 PIREP 聚合结果。</p>
-      </header>
+    <Stack spacing={3}>
+      <Box>
+        <Typography variant="h4" fontWeight={700}>运行总览</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+          基于真实数据库会话、PIREP、成员和机队数据的 Material Design 3 总览页。
+        </Typography>
+      </Box>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatPill label="今日航班" value={dashboard.todayFlights} />
-        <StatPill label="累计小时" value={dashboard.totalHours.toFixed(1)} />
-        <StatPill label="当前阶段" value={tracking.phase} />
-        <StatPill label="活动会话" value={currentSession ? currentSession.callsign : '无'} />
-      </div>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="今日航班" value={dashboard.todayFlights} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="累计小时" value={dashboard.totalHours.toFixed(1)} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="当前阶段" value={tracking.phase} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><StatPill label="活动会话" value={currentSession ? currentSession.callsign : '无'} /></Grid>
+      </Grid>
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <GlassCard title="当前会话状态">
-          {currentSession ? (
-            <div className="space-y-3 text-sm text-slate-300">
-              <div className="rounded-2xl bg-white/5 p-4">呼号：{currentSession.callsign}</div>
-              <div className="rounded-2xl bg-white/5 p-4">机型：{currentSession.aircraftType}</div>
-              <div className="rounded-2xl bg-white/5 p-4">开始时间：{formatDateTime(currentSession.startedAt)}</div>
-              <div className="rounded-2xl bg-white/5 p-4">当前阶段：{currentSession.lastPhase}</div>
-              <div className="rounded-2xl bg-white/5 p-4">最大高度：{currentSession.maxAltitudeFt.toFixed(0)} ft</div>
-            </div>
-          ) : (
-            <div className="rounded-2xl bg-white/5 p-4 text-sm text-slate-400">当前没有活动 flight session。</div>
-          )}
-        </GlassCard>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <GlassCard title="当前会话状态">
+            {currentSession ? (
+              <Stack spacing={2}>
+                <StatPill label="呼号" value={currentSession.callsign} />
+                <StatPill label="机型" value={currentSession.aircraftType} />
+                <StatPill label="开始时间" value={formatDateTime(currentSession.startedAt)} />
+                <StatPill label="当前阶段" value={currentSession.lastPhase} />
+                <StatPill label="最大高度" value={`${currentSession.maxAltitudeFt.toFixed(0)} ft`} />
+              </Stack>
+            ) : (
+              <Typography color="text.secondary">当前没有活动 flight session。</Typography>
+            )}
+          </GlassCard>
+        </Grid>
 
-        <GlassCard title="最近 PIREP">
-          {dashboard.recentPireps.length > 0 ? (
-            <div className="space-y-3">
-              {dashboard.recentPireps.map((pirep) => (
-                <div key={pirep.id} className="rounded-2xl bg-white/5 p-4">
-                  <div className="font-medium">{pirep.flightNumber}</div>
-                  <div className="mt-1 text-sm text-slate-400">{pirep.departure} → {pirep.arrival}</div>
-                  <div className="mt-3 flex items-center justify-between text-sm text-slate-300">
-                    <span>{pirep.blockTimeMinutes} min</span>
-                    <span>{pirep.landingRateFpm} fpm</span>
-                    <span>{pirep.fuelUsedKg} kg</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl bg-white/5 p-4 text-sm text-slate-400">暂无真实 PIREP 记录。</div>
-          )}
-        </GlassCard>
-      </div>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <GlassCard title="最近 PIREP">
+            {dashboard.recentPireps.length > 0 ? (
+              <Stack spacing={2}>
+                {dashboard.recentPireps.map((pirep) => (
+                  <Box key={pirep.id} sx={{ p: 2.5, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <Typography fontWeight={700}>{pirep.flightNumber}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>{pirep.departure} → {pirep.arrival}</Typography>
+                    <Stack direction="row" spacing={2} sx={{ mt: 1.5 }}>
+                      <Typography variant="body2">{pirep.blockTimeMinutes} min</Typography>
+                      <Typography variant="body2">{pirep.landingRateFpm} fpm</Typography>
+                      <Typography variant="body2">{pirep.fuelUsedKg} kg</Typography>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            ) : (
+              <Typography color="text.secondary">暂无真实 PIREP 记录。</Typography>
+            )}
+          </GlassCard>
+        </Grid>
+      </Grid>
 
       <GlassCard title="成员排行">
         {dashboard.memberRanking.length > 0 ? (
-          <div className="space-y-3">
+          <Stack spacing={2}>
             {dashboard.memberRanking.map((member, index) => (
-              <div key={member.id} className="flex items-center justify-between rounded-2xl bg-white/5 p-4">
-                <div>
-                  <div className="text-sm text-slate-400">#{index + 1}</div>
-                  <div className="font-medium">{member.name}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-slate-400">{member.rank}</div>
-                  <div className="font-semibold">{member.hours.toFixed(1)} h</div>
-                </div>
-              </div>
+              <Box key={member.id} sx={{ p: 2.5, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">#{index + 1}</Typography>
+                  <Typography fontWeight={700}>{member.name}</Typography>
+                </Box>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="body2" color="text.secondary">{member.rank}</Typography>
+                  <Typography fontWeight={700}>{member.hours.toFixed(1)} h</Typography>
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Stack>
         ) : (
-          <div className="rounded-2xl bg-white/5 p-4 text-sm text-slate-400">暂无成员排行数据。</div>
+          <Typography color="text.secondary">暂无成员排行数据。</Typography>
         )}
       </GlassCard>
-    </div>
+    </Stack>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Alert, Box, Button, Chip, Grid2 as Grid, Stack, Typography } from '@mui/material';
 import type { CabinAnnouncement, FlightHubSnapshot } from '@shared/types';
 import { GlassCard } from '../components/ui/GlassCard';
 
@@ -15,29 +16,36 @@ export function CabinPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   };
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold">客舱语音</h1>
-        <p className="mt-2 text-sm text-slate-400">当前仅展示真实可用功能：本地 WAV/MP3 媒体播放。请先把媒体文件放入运行时媒体目录，再点击播放。</p>
-        {message ? <p className="mt-3 text-xs text-sky-300">{message}</p> : null}
-      </header>
+    <Stack spacing={3}>
+      <Box>
+        <Typography variant="h4" fontWeight={700}>客舱语音</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+          当前保留真实可用能力：本地 WAV/MP3 媒体文件播放。
+        </Typography>
+      </Box>
+      {message ? <Alert severity="info">{message}</Alert> : null}
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <Grid container spacing={3}>
         {snapshot.announcements.map((announcement) => (
-          <GlassCard key={announcement.id} title={announcement.title} extra={<span className="text-xs text-slate-400">{announcement.phase}</span>}>
-            <div className="space-y-3 text-sm text-slate-300">
-              <div className="rounded-2xl bg-white/5 p-4">{announcement.text}</div>
-              <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-                <span>语言：{announcement.language}</span>
-                <span>模式：{announcement.mode}</span>
-                <span>自动播放：{announcement.autoPlay ? '已启用' : '未启用'}</span>
-                {announcement.mediaFile ? <span>媒体：{announcement.mediaFile}</span> : null}
-              </div>
-              <button className="rounded-2xl bg-sky-400/20 px-4 py-3 text-sm text-sky-200" onClick={() => play(announcement)}>{announcement.mode === 'wav' ? '播放媒体文件' : 'TTS 未接入'}</button>
-            </div>
-          </GlassCard>
+          <Grid key={announcement.id} size={{ xs: 12, xl: 6 }}>
+            <GlassCard title={announcement.title} extra={<Typography variant="caption" color="text.secondary">{announcement.phase}</Typography>}>
+              <Stack spacing={2}>
+                <Box sx={{ p: 2.5, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <Typography variant="body2" color="text.secondary">广播内容</Typography>
+                  <Typography sx={{ mt: 1 }}>{announcement.text}</Typography>
+                </Box>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Chip label={`语言：${announcement.language}`} variant="outlined" />
+                  <Chip label={`模式：${announcement.mode}`} variant="outlined" />
+                  <Chip label={announcement.autoPlay ? '自动播放已启用' : '自动播放未启用'} variant="outlined" />
+                  {announcement.mediaFile ? <Chip label={`媒体：${announcement.mediaFile}`} variant="outlined" /> : null}
+                </Stack>
+                <Button onClick={() => play(announcement)}>{announcement.mode === 'wav' ? '播放媒体文件' : 'TTS 未接入'}</Button>
+              </Stack>
+            </GlassCard>
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Stack>
   );
 }
