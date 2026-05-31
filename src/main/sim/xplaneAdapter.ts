@@ -11,7 +11,7 @@ const mappings: Record<number, DatasetMapping> = {
   3: { group: 'airspeed', fields: ['indicated', 'equivalent', 'true', 'truegnd', null, 'mph', 'mphair', 'mphgnd'] },
   4: { group: 'gload', fields: ['mach', null, 'vvi', null, 'normal', 'axial', 'side', null] },
   17: { group: 'attitude', fields: ['pitch', 'roll', 'truehdg', 'maghdg', null, null, null, null] },
-  20: { group: 'globalposition', fields: ['lat', 'lon', 'altmsl', 'altagl', 'runway', 'altind', 'latnorm', 'lonnorm'] }
+  62: { group: 'fuel', fields: ['totalFuelWeightKg', null, null, null, null, null, null, null] }
 };
 
 export class XPlaneAdapter implements SimulatorAdapter {
@@ -75,11 +75,14 @@ export class XPlaneAdapter implements SimulatorAdapter {
     const airspeed = this.latest.airspeed ?? {};
     const attitude = this.latest.attitude ?? {};
     const gload = this.latest.gload ?? {};
+    const fuel = this.latest.fuel ?? {};
 
     return {
       callsign: 'XPLANE',
       aircraftType: 'X-Plane Aircraft',
       onGround: (globalposition.altagl ?? 0) < 5,
+      totalFuelKg: Number(fuel.totalFuelWeightKg ?? 0),
+      nearestIcao: undefined,
       position: {
         lat: Number(globalposition.lat ?? 0),
         lon: Number(globalposition.lon ?? 0),

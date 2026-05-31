@@ -19,6 +19,7 @@ export class SimBridgeService {
   private currentSession: FlightSession | null = null;
   private latestPirep: PirepRecord | null = null;
   private lastEventPhase: FlightPhase | null = null;
+  private lastFuelKg: number | null = null;
 
   constructor(
     private readonly sessionRepository: FlightSessionRepository,
@@ -43,7 +44,10 @@ export class SimBridgeService {
   private ensureSession(source: SimSource) {
     if (this.currentSession) return this.currentSession;
     const now = new Date().toISOString();
-    const activeDispatch = this.dispatchRepository.getActiveDispatch();
+    const activeDispatch = this.dispatchRepository.getActiveDispatch() ?? this.dispatchRepository.getLatestDraftDispatch();
+    if (activeDispatch && activeDispatch.status === 'draft') {
+      this.dispatchRepository.markStatus(activeDispatch.id, 'active');
+    }
     this.currentSession = this.sessionRepository.createSession({
       id: crypto.randomUUID(),
       simulatorSource: source,
@@ -77,6 +81,14 @@ export class SimBridgeService {
 
     if (phase === 'taxi' && !session.blockOffAt) session.blockOffAt = now;
     if ((phase === 'takeoff' || phase === 'climb') && !session.takeoffAt) session.takeoffAt = now;
+    if (this.lastFuelKg !== null) {
+      session.fuelEndKg = this.lastFuelKg;
+      if (session.fuelStartKg === undefined) session.fuelStartKg = this.lastFuelKg;
+      session.fuelUsedKg = Math.max(0, (session.fuelStartKg ?? this.lastFuelKg) - this.lastFuelKg);
+    }
+    if (!session.departureIcao && phase === 'taxi') {
+      session.departureIcao = session.departureIcao ?? undefined;
+    }
     if ((phase === 'landing' || phase === 'parked') && !session.landingAt && session.takeoffAt) {
       session.landingAt = now;
       session.landingRateFpm = this.tracking.position?.verticalSpeed ?? session.landingRateFpm;
@@ -85,6 +97,9 @@ export class SimBridgeService {
       session.blockOnAt = now;
       session.endedAt = now;
       session.status = 'completed';
+      if (session.departureIcao && !session.arrivalIcao) {
+        session.arrivalIcao = session.departureIcao;
+      }
     }
 
     session.callsign = this.tracking.callsign;
@@ -144,6 +159,17 @@ export class SimBridgeService {
           onGround: sample.onGround
         });
 
+        this.lastFuelKg = sample.totalFuelKg ?? this.lastFuelKg;
+
+        if (sample.nearestIcao) {
+          if (!this.currentSession?.departureIcao && (phase === 'preflight' || phase === 'taxi' || phase === 'takeoff')) {
+            if (this.currentSession) this.currentSession.departureIcao = sample.nearestIcao;
+          }
+          if (this.currentSession?.takeoffAt && (phase === 'approach' || phase === 'landing' || phase === 'parked')) {
+            this.currentSession.arrivalIcao = sample.nearestIcao;
+          }
+        }
+
         this.tracking = {
           ...this.tracking,
           source,
@@ -156,6 +182,11 @@ export class SimBridgeService {
           position: sample.position,
           track: [...this.tracking.track.slice(-199), { ...sample.position, phase }]
         };
+
+        const activeDispatch = this.dispatchRepository.getActiveDispatch();
+        if (activeDispatch && activeDispatch.status === 'active' && phase === 'parked' && this.currentSession?.id) {
+          this.dispatchRepository.markStatus(activeDispatch.id, 'completed');
+        }
 
         this.updateSessionForPhase(phase);
         this.onUpdate(this.tracking);

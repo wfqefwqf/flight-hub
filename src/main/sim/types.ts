@@ -5,6 +5,8 @@ export interface AdapterSample {
   callsign: string;
   aircraftType: string;
   onGround?: boolean;
+  totalFuelKg?: number;
+  nearestIcao?: string;
 }
 
 export interface SimulatorAdapter {

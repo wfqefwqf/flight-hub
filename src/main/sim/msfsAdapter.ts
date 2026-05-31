@@ -37,6 +37,8 @@ export class MsfsAdapter implements SimulatorAdapter {
         callsign: String(data.ATC_ID ?? data.ATC_AIRLINE ?? 'MSFS'),
         aircraftType: String(data.TITLE ?? data.ATC_MODEL ?? 'MSFS Aircraft'),
         onGround: Number(data.SIM_ON_GROUND ?? 0) === 1,
+        totalFuelKg: Number(data.FUEL_TOTAL_QUANTITY_WEIGHT ?? 0) * 0.45359237,
+        nearestIcao: String(data.AIRPORT_ID ?? '').trim() || undefined,
         position: {
           lat: Number(data.PLANE_LATITUDE ?? 0),
           lon: Number(data.PLANE_LONGITUDE ?? 0),
@@ -58,7 +60,9 @@ export class MsfsAdapter implements SimulatorAdapter {
     'GROUND VELOCITY',
     'PLANE HEADING DEGREES TRUE',
     'VERTICAL SPEED',
-    'SIM ON GROUND');
+    'SIM ON GROUND',
+    'FUEL TOTAL QUANTITY WEIGHT',
+    'AIRPORT ID');
   }
 
   async disconnect() {

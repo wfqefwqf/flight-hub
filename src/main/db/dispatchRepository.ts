@@ -82,6 +82,15 @@ export class DispatchRepository {
     return row ? mapDispatch(row) : null;
   }
 
+  getLatestDraftDispatch() {
+    const row = this.db.prepare('SELECT * FROM dispatches WHERE status = ? ORDER BY created_at DESC LIMIT 1').get('draft');
+    return row ? mapDispatch(row) : null;
+  }
+
+  markStatus(id: string, status: DispatchFlight['status']) {
+    this.db.prepare('UPDATE dispatches SET status = ? WHERE id = ?').run(status, id);
+  }
+
   createDraft() {
     const draft: DispatchFlight = {
       id: crypto.randomUUID(),
@@ -94,7 +103,12 @@ export class DispatchRepository {
       fuelKg: 0,
       source: 'manual',
       status: 'draft',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      pilotMemberId: '',
+      fleetAircraftId: '',
+      simbriefUsername: '',
+      simbriefUserId: '',
+      simbriefNavlogId: ''
     };
 
     this.save(draft);
