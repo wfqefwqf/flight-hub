@@ -32,28 +32,40 @@ export function DispatchPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   };
 
   const importSimBrief = async () => {
-    const draft = await window.flightHub.importSimBrief({
-      flightNumber: form.flightNumber,
-      departure: form.departure,
-      arrival: form.arrival,
-      alternate: form.alternate,
-      route: form.route,
-      payloadKg: form.payloadKg,
-      fuelKg: form.fuelKg
-    });
-    setForm(draft);
-    setMessage('已创建 SimBrief 来源的签派草稿。');
+    try {
+      const draft = await window.flightHub.importSimBrief({
+        flightNumber: form.flightNumber,
+        departure: form.departure,
+        arrival: form.arrival,
+        alternate: form.alternate,
+        route: form.route,
+        payloadKg: form.payloadKg,
+        fuelKg: form.fuelKg
+      });
+      setForm(draft);
+      setMessage('已创建 SimBrief 来源的签派草稿。');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '导入失败');
+    }
   };
 
   const save = async () => {
-    const saved = await window.flightHub.saveDispatch(form);
-    setForm(saved);
-    setMessage('签派已保存。');
+    try {
+      const saved = await window.flightHub.saveDispatch(form);
+      setForm(saved);
+      setMessage('签派已保存。');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '保存失败');
+    }
   };
 
   const exportJson = async () => {
-    const output = await window.flightHub.exportDispatch(form.id);
-    setMessage(output ? `已导出到：${output}` : '已取消导出。');
+    try {
+      const output = await window.flightHub.exportDispatch(form.id);
+      setMessage(output ? `已导出到：${output}` : '已取消导出。');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '导出失败');
+    }
   };
 
   const newDraft = () => {

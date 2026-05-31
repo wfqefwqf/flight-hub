@@ -1,5 +1,6 @@
 import type { FlightHubSnapshot } from '@shared/types';
 import { GlassCard } from '../components/ui/GlassCard';
+import { formatDateTime } from '../lib/format';
 
 export function PirepPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   const session = snapshot.currentSession;
@@ -17,7 +18,7 @@ export function PirepPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl bg-white/5 p-4">
                 <div className="text-slate-400">开始时间</div>
-                <div className="mt-1 font-medium">{new Date(session.startedAt).toLocaleString()}</div>
+                <div className="mt-1 font-medium">{formatDateTime(session.startedAt)}</div>
               </div>
               <div className="rounded-2xl bg-white/5 p-4">
                 <div className="text-slate-400">当前阶段</div>
@@ -25,15 +26,15 @@ export function PirepPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
               </div>
               <div className="rounded-2xl bg-white/5 p-4">
                 <div className="text-slate-400">推出</div>
-                <div className="mt-1 font-medium">{session.blockOffAt ? new Date(session.blockOffAt).toLocaleString() : '尚未记录'}</div>
+                <div className="mt-1 font-medium">{formatDateTime(session.blockOffAt)}</div>
               </div>
               <div className="rounded-2xl bg-white/5 p-4">
                 <div className="text-slate-400">起飞</div>
-                <div className="mt-1 font-medium">{session.takeoffAt ? new Date(session.takeoffAt).toLocaleString() : '尚未记录'}</div>
+                <div className="mt-1 font-medium">{formatDateTime(session.takeoffAt)}</div>
               </div>
               <div className="rounded-2xl bg-white/5 p-4">
                 <div className="text-slate-400">落地</div>
-                <div className="mt-1 font-medium">{session.landingAt ? new Date(session.landingAt).toLocaleString() : '尚未记录'}</div>
+                <div className="mt-1 font-medium">{formatDateTime(session.landingAt)}</div>
               </div>
               <div className="rounded-2xl bg-white/5 p-4">
                 <div className="text-slate-400">最大高度</div>
@@ -71,7 +72,7 @@ export function PirepPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
                 <div className="mt-1 font-medium">{latestPirep.landingRateFpm} fpm</div>
               </div>
             </div>
-            <div className="rounded-2xl bg-white/5 p-4 text-slate-400">提交时间：{new Date(latestPirep.submittedAt).toLocaleString()}</div>
+            <div className="rounded-2xl bg-white/5 p-4 text-slate-400">提交时间：{formatDateTime(latestPirep.submittedAt)}</div>
           </div>
         ) : (
           <div className="rounded-2xl bg-white/5 p-4 text-sm text-slate-400">还没有自动生成的 PIREP。完成一次完整起飞、落地并进入停靠阶段后会在这里显示。</div>

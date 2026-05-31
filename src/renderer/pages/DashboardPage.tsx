@@ -1,6 +1,7 @@
 import type { FlightHubSnapshot } from '@shared/types';
 import { GlassCard } from '../components/ui/GlassCard';
 import { StatPill } from '../components/ui/StatPill';
+import { formatDateTime } from '../lib/format';
 
 export function DashboardPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   const { dashboard, tracking, currentSession } = snapshot;
@@ -25,7 +26,7 @@ export function DashboardPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
             <div className="space-y-3 text-sm text-slate-300">
               <div className="rounded-2xl bg-white/5 p-4">呼号：{currentSession.callsign}</div>
               <div className="rounded-2xl bg-white/5 p-4">机型：{currentSession.aircraftType}</div>
-              <div className="rounded-2xl bg-white/5 p-4">开始时间：{new Date(currentSession.startedAt).toLocaleString()}</div>
+              <div className="rounded-2xl bg-white/5 p-4">开始时间：{formatDateTime(currentSession.startedAt)}</div>
               <div className="rounded-2xl bg-white/5 p-4">当前阶段：{currentSession.lastPhase}</div>
               <div className="rounded-2xl bg-white/5 p-4">最大高度：{currentSession.maxAltitudeFt.toFixed(0)} ft</div>
             </div>

@@ -41,8 +41,19 @@ export class SimBridgeService {
       callsign: this.tracking.callsign || 'UNKNOWN',
       aircraftType: this.tracking.aircraftType || 'UNKNOWN',
       startedAt: now,
+      endedAt: undefined,
+      blockOffAt: undefined,
+      takeoffAt: undefined,
+      landingAt: undefined,
+      blockOnAt: undefined,
+      departureIcao: undefined,
+      arrivalIcao: undefined,
       maxAltitudeFt: 0,
       lastPhase: this.tracking.phase,
+      landingRateFpm: undefined,
+      fuelStartKg: undefined,
+      fuelEndKg: undefined,
+      fuelUsedKg: undefined,
       status: 'active'
     });
     this.lastEventPhase = null;

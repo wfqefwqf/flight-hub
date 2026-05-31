@@ -18,17 +18,30 @@ const navItems = [
 ];
 
 export default function App() {
-  const { snapshot, loading, setSnapshot, patchTracking } = useAppStore();
+  const { snapshot, loading, error, setSnapshot, setError, patchTracking } = useAppStore();
 
   useEffect(() => {
     if (!window.flightHub) {
       return;
     }
 
-    window.flightHub.getSnapshot().then(setSnapshot);
+    let mounted = true;
+
+    window.flightHub
+      .getSnapshot()
+      .then((data) => {
+        if (mounted) setSnapshot(data);
+      })
+      .catch((err) => {
+        if (mounted) setError(err instanceof Error ? err.message : 'Failed to load snapshot');
+      });
+
     const unsubscribe = window.flightHub.onTrackingUpdated((tracking) => patchTracking(tracking));
-    return unsubscribe;
-  }, [setSnapshot, patchTracking]);
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [setSnapshot, setError, patchTracking]);
 
   return (
     <div className="flex h-screen gap-6 overflow-hidden p-6 text-slate-100">
@@ -65,7 +78,11 @@ export default function App() {
       <main className="flex-1 overflow-y-auto rounded-[32px] border border-white/8 bg-slate-900/45 p-6 shadow-glass backdrop-blur-xl">
         {loading || !snapshot ? (
           <div className="flex h-full min-h-[60vh] items-center justify-center text-slate-400">
-            {window.flightHub ? 'Loading Flight Hub...' : '请通过 Electron 启动本应用，浏览器直开仅用于前端调试。'}
+            {error
+              ? `加载失败：${error}`
+              : window.flightHub
+                ? 'Loading Flight Hub...'
+                : '请通过 Electron 启动本应用，浏览器直开仅用于前端调试。'}
           </div>
         ) : (
           <Routes>

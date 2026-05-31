@@ -1,6 +1,10 @@
 import type { FlightEvent, FlightPhase, FlightSession, PirepRecord } from '@shared/types';
 import type { AppDatabase } from './bootstrap';
 
+function optionalString(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
 function mapSession(row: any): FlightSession {
   return {
     id: row.id,
@@ -8,13 +12,13 @@ function mapSession(row: any): FlightSession {
     callsign: row.callsign,
     aircraftType: row.aircraft_type,
     startedAt: row.started_at,
-    endedAt: row.ended_at ?? undefined,
-    blockOffAt: row.block_off_at ?? undefined,
-    takeoffAt: row.takeoff_at ?? undefined,
-    landingAt: row.landing_at ?? undefined,
-    blockOnAt: row.block_on_at ?? undefined,
-    departureIcao: row.departure_icao ?? undefined,
-    arrivalIcao: row.arrival_icao ?? undefined,
+    endedAt: optionalString(row.ended_at),
+    blockOffAt: optionalString(row.block_off_at),
+    takeoffAt: optionalString(row.takeoff_at),
+    landingAt: optionalString(row.landing_at),
+    blockOnAt: optionalString(row.block_on_at),
+    departureIcao: optionalString(row.departure_icao),
+    arrivalIcao: optionalString(row.arrival_icao),
     maxAltitudeFt: Number(row.max_altitude_ft ?? 0),
     lastPhase: row.last_phase,
     landingRateFpm: row.landing_rate_fpm ?? undefined,
@@ -36,6 +40,23 @@ function mapPirep(row: any): PirepRecord {
     landingRateFpm: row.landing_rate_fpm,
     notes: row.notes ?? undefined,
     submittedAt: row.submitted_at
+  };
+}
+
+function normalizeSession(session: FlightSession) {
+  return {
+    ...session,
+    endedAt: session.endedAt ?? null,
+    blockOffAt: session.blockOffAt ?? null,
+    takeoffAt: session.takeoffAt ?? null,
+    landingAt: session.landingAt ?? null,
+    blockOnAt: session.blockOnAt ?? null,
+    departureIcao: session.departureIcao ?? null,
+    arrivalIcao: session.arrivalIcao ?? null,
+    landingRateFpm: session.landingRateFpm ?? null,
+    fuelStartKg: session.fuelStartKg ?? null,
+    fuelEndKg: session.fuelEndKg ?? null,
+    fuelUsedKg: session.fuelUsedKg ?? null
   };
 }
 
@@ -63,7 +84,7 @@ export class FlightSessionRepository {
         @landingAt, @blockOnAt, @departureIcao, @arrivalIcao, @maxAltitudeFt, @lastPhase,
         @landingRateFpm, @fuelStartKg, @fuelEndKg, @fuelUsedKg, @status
       )
-    `).run(session as any);
+    `).run(normalizeSession(session) as any);
     return session;
   }
 
@@ -88,7 +109,7 @@ export class FlightSessionRepository {
         fuel_used_kg = @fuelUsedKg,
         status = @status
       WHERE id = @id
-    `).run(session as any);
+    `).run(normalizeSession(session) as any);
     return session;
   }
 

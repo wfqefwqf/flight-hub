@@ -6,8 +6,12 @@ export function CabinPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
   const [message, setMessage] = useState<string>('');
 
   const play = async (announcement: CabinAnnouncement) => {
-    const result = await window.flightHub.playAnnouncement(announcement);
-    setMessage(result.message + (result.mediaDirectory ? ` Media dir: ${result.mediaDirectory}` : ''));
+    try {
+      const result = await window.flightHub.playAnnouncement(announcement);
+      setMessage(result.message + (result.mediaDirectory ? ` Media dir: ${result.mediaDirectory}` : ''));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '播放失败');
+    }
   };
 
   return (
