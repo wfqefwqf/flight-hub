@@ -1,254 +1,224 @@
 # Flight Hub
 
-Flight Hub 是一个基于 **Electron + React + TypeScript + Tailwind + SQLite** 的跨平台虚航管理桌面应用。
+Flight Hub 是一个基于 Electron + React + TypeScript + Tailwind 开发的跨平台虚航管理桌面应用。
 
-当前仓库已经从“界面原型”开始转向“真实数据驱动”的实用版本，核心目标是把模拟器实时数据接入、飞行会话记录、PIREP 自动生成、签派管理和客舱媒体能力逐步做实。
-
-## 当前真实可用能力
-
-### 1. 航班追踪
-- 支持 **MSFS SimConnect** 采样
-- 支持 **X-Plane UDP Data Output** 监听
-- 显示实时位置、速度、高度、飞行阶段
-- 在地图上显示实时轨迹
-- 将 tracking 数据写入真实 `flight_sessions` 与 `flight_events`
-
-关键实现：
-- `src/main/sim/msfsAdapter.ts`
-- `src/main/sim/xplaneAdapter.ts`
-- `src/main/services/simBridgeService.ts`
-- `src/main/db/flightSessionRepository.ts`
-
-### 2. Flight Session / 自动基础 PIREP
-- 自动创建活动飞行会话
-- 记录 phase 变化事件
-- 自动记录推出、起飞、落地、停靠时间点
-- 自动记录最大高度
-- 会话结束后自动生成基础 PIREP
-
-当前 PIREP 自动生成字段包括：
-- 航班号
-- 起降机场（当前仍可能为 `UNK`，待后续自动识别增强）
-- block time
-- landing rate（基础版）
-- fuel used（字段已预留，后续继续增强真实采样）
-
-关键实现：
-- `src/main/db/flightSessionRepository.ts`
-- `src/main/services/simBridgeService.ts`
-- `src/renderer/pages/PirepPage.tsx`
-
-### 3. Dashboard 真实聚合
-当前 Dashboard 已不再展示虚拟统计，而是基于真实数据库聚合：
-- 今日航班数量
-- 累计小时
-- 当前活动会话
-- 最近 PIREP 列表
-- 真实成员排行（来自 `members` 表）
-
-关键实现：
-- `src/main/db/flightSessionRepository.ts`
-- `src/main/ipc/registerHandlers.ts`
-- `src/renderer/pages/DashboardPage.tsx`
-
-### 4. Dispatch 真实 CRUD + SimBrief 导入
-当前已支持：
-- 新建签派草稿
-- 编辑签派单
-- 保存到真实 SQLite `dispatches` 表
-- 导出 `dispatch.json`
-- 通过 **SimBrief 用户名 / userId / navlogId** 调用官方 fetcher API 导入签派数据
-- 在 Dispatch 中绑定成员 ID / 机队 ID，供后续会话继承
-
-关键实现：
-- `src/main/db/dispatchRepository.ts`
-- `src/main/services/simbriefService.ts`
-- `src/main/ipc/registerHandlers.ts`
-- `src/renderer/pages/DispatchPage.tsx`
-
-### 5. 成员 / 机队管理真实 CRUD
-当前已支持：
-- 成员新增 / 删除 / 小时显示
-- 机队新增 / 删除 / 状态维护 / 小时显示
-- 会话完成后，若 session 已绑定成员与机队，会自动累计飞行小时
-
-关键实现：
-- `src/main/db/memberRepository.ts`
-- `src/main/db/fleetRepository.ts`
-- `src/main/services/simBridgeService.ts`
-- `src/renderer/pages/ManagementPage.tsx`
-
-### 6. 客舱语音（当前最小可用版）
-当前已支持：
-- 本地 `WAV/MP3` 媒体文件播放
-- 自动创建运行时媒体目录
-- 页面提示媒体目录路径
-
-当前 **尚未接通**：
-- TTS
-- 基于飞行阶段自动广播
-- 广播模板编辑器
-
-关键实现：
-- `src/main/services/cabinService.ts`
-- `src/renderer/pages/CabinPage.tsx`
+它的目标不是做展示面板，而是把虚航日常使用中最常见的几类工作整合到一个桌面工具里：
+- 航班追踪
+- 签派管理
+- 自动 PIREP 基础记录
+- 成员 / 机队管理
+- 客舱广播播放
+- 运行总览
 
 ---
 
-## 当前还未完成的需求
-以下需求仍在后续开发中，当前仓库不会把它们伪装成“已可用”：
+## 当前可用功能
 
-- 自动 fuel burn 统计
-- 更准确的自动 departure / arrival ICAO 识别
-- 完整的 flight session 与 dispatch 生命周期联动
-- 成员 / 机队编辑（当前已支持新增与删除，后续会补更完整编辑体验）
-- TTS 广播
-- 客舱广播自动触发
-- XPUIPC 接入
-- X-Plane 更稳的主动接口方案（当前主要是 UDP Data Output 监听）
+### 航班追踪
+- 支持读取 **MSFS** 实时数据
+- 支持读取 **X-Plane UDP Data Output** 数据
+- 显示飞机位置、速度、高度、飞行阶段
+- 在地图上显示当前轨迹
+
+### 签派
+- 可手动创建签派单
+- 可保存签派单到本地数据库
+- 可导出 `dispatch.json`
+- 支持填写 SimBrief 用户名 / User ID / Navlog ID，并尝试导入签派数据
+
+### PIREP
+- 飞行会话完成后会自动生成基础 PIREP
+- 当前已记录：
+  - 航班号
+  - 起飞机场 / 目的机场（优先取签派数据）
+  - 飞行时间
+  - 着陆率
+  - 燃油消耗（已接入基础采样）
+- 支持保存备注
+
+### 成员 / 机队管理
+- 支持新增、删除成员
+- 支持新增、删除机队记录
+- 飞行完成后，如果当前会话已绑定成员 / 机队，会自动累计小时
+
+### 客舱语音
+- 支持本地 `WAV / MP3` 文件播放
+- 适合做起飞前、落地后等固定广播
+
+### 运行总览
+- 显示今日航班数
+- 显示累计小时
+- 显示最近 PIREP
+- 显示成员排行
+- 显示当前活动飞行会话
 
 ---
 
-## 技术栈
+## 安装与启动
 
-- Electron
-- React 18
-- TypeScript
-- Tailwind CSS
-- Vite
-- SQLite (`better-sqlite3`)
-- Leaflet / React-Leaflet
-- Zustand
-
----
-
-## 项目结构
-
-```text
-src/
-  main/
-    db/              # SQLite schema 与 repository
-    ipc/             # IPC handlers
-    services/        # 业务服务（tracking/session/cabin）
-    sim/             # 模拟器接入适配器
-  preload/           # Electron preload API
-  renderer/          # React 前端
-  shared/            # 前后端共享类型
-```
-
----
-
-## 本地开发
-
-### 安装依赖
+### 1. 安装依赖
 ```bash
 npm install
 ```
 
-### 启动开发环境
+### 2. 启动开发环境
 ```bash
 npm run dev
 ```
 
-开发模式会同时启动：
-- Vite renderer
-- main 进程 TypeScript watch
-- preload TypeScript watch
-- Electron
-
-### 类型检查
+### 3. 类型检查
 ```bash
 npm run typecheck
 ```
 
-### 打包
+### 4. 打包
 ```bash
 npm run dist
 ```
 
 ---
 
-## 模拟器接入说明
+## 如何连接模拟器
 
 ### MSFS
-当前通过 `msfs-simconnect-api-wrapper` 读取数据。
-默认配置：
+Flight Hub 通过 SimConnect 采样数据。
+
+默认连接参数：
 - Host: `127.0.0.1`
 - Port: `500`
 
+在 Flight Hub 的“航班追踪”页面可以修改连接参数。
+
 ### X-Plane
-当前通过本地 UDP 监听 `DATA` 输出。
-默认配置：
+当前通过 **UDP Data Output** 接收数据。
+
+默认端口：
 - Local UDP Port: `49000`
 
-你需要在 X-Plane 中主动开启对应的 **Data Output** 发送到本机端口。
+使用前请在 X-Plane 中开启对应的数据输出，并发送到本机端口。
 
 ---
 
-## Dispatch / 成员 / 机队联动测试
+## 如何使用
+
+## 1. 航班追踪
+进入“航班追踪”页面后：
+1. 选择模拟器来源（MSFS / X-Plane / Mock）
+2. 根据需要修改连接参数
+3. 点击重新连接
+4. 成功连接后可以看到：
+   - 实时位置
+   - 高度
+   - 地速
+   - 飞行阶段
+   - 轨迹地图
+
+如果连接失败，会在页面上直接显示错误信息。
+
+---
+
+## 2. 签派
+进入“签派”页面后可以：
+- 新建签派草稿
+- 编辑航班号、起降机场、备降机场、航路、业载、燃油
+- 保存签派单
+- 导出 `dispatch.json`
 
 ### SimBrief 导入
-当前 Dispatch 页支持填写以下任一参数后导入：
-- `SimBrief 用户名`
-- `SimBrief 用户 ID`
-- `SimBrief Navlog ID`
+如果你有 SimBrief 数据，可以填写以下任一项：
+- SimBrief 用户名
+- SimBrief User ID
+- SimBrief Navlog ID
 
-导入成功后会把结果保存为真实签派记录。
+然后点击导入。
+
+导入成功后，Flight Hub 会把返回的数据保存成真实签派记录。
 
 ### 成员 / 机队绑定
-当前 Dispatch 页支持填写：
-- `成员 ID`
-- `机队 ID`
+签派页面还支持填写：
+- 成员 ID
+- 机队 ID
 
-当该签派被标记为 active 并被新的 flight session 继承后，会话完成时将自动累计：
-- 成员飞行小时
-- 机队飞行小时
+如果当前签派被飞行会话继承，飞行结束后会自动把飞行小时累计到对应成员和机队。
 
 ---
 
-## 客舱媒体目录
+## 3. PIREP
+进入“PIREP”页面后：
+- 可以查看当前活动会话
+- 可以查看最近自动生成的 PIREP
+- 可以为已有 PIREP 保存备注
 
-客舱语音的本地媒体文件会从 Electron `userData` 目录下的：
-
-```text
-cabin-media/
-```
-
-中读取。
-
-如果页面提示找不到媒体文件，请把对应 `wav/mp3` 文件放入该目录。
-
----
-
-## 数据库
-
-数据库位于 Electron `userData` 目录下：
-
-```text
-flight-hub.db
-```
-
-当前已使用结构化表，而不是 JSON blob：
-- `flight_sessions`
-- `flight_events`
-- `pireps`
-- `dispatches`
-- `members`
-- `fleet`
-- `announcements`
-
-关键定义：
-- `src/main/db/bootstrap.ts`
+### 自动生成规则（当前版本）
+当一次飞行满足以下条件时，系统会自动生成基础 PIREP：
+- 已记录起飞
+- 已记录落地
+- 最终进入停靠阶段（parked）
 
 ---
 
-## 当前开发方向
+## 4. 成员 / 机队管理
+进入“成员 / 机队”页面后：
+- 可新增成员
+- 可删除成员
+- 可新增机队记录
+- 可删除机队记录
+- 可查看当前累计小时
 
-当前开发优先级：
-1. 更准确的自动 PIREP 字段生成（fuel / ICAO / landing rate / session 质量）
-2. Dispatch 与 flight session 生命周期联动
-3. 成员 / 机队更完整编辑能力与联动统计
-4. 客舱 TTS 与自动广播
-5. 更完整的 X-Plane 接入方案
+如果某次飞行会话绑定了成员 / 机队，飞行结束后会自动增加对应小时数。
 
 ---
+
+## 5. 客舱语音
+进入“客舱语音”页面后：
+- 可以查看广播项
+- 可以直接播放本地媒体文件
+
+### 媒体文件放哪里
+程序会使用 Electron 的 `userData/cabin-media` 目录读取媒体文件。
+
+如果页面提示找不到文件，请把对应的 `wav` 或 `mp3` 放入这个目录。
+
+---
+
+## 当前限制
+以下内容仍在继续完善：
+- 更准确的燃油消耗计算
+- 更准确的起降机场自动识别
+- 更完善的 SimBrief 导入兼容性
+- TTS 客舱广播
+- 自动广播触发
+- 更完整的 X-Plane 接入方式
+- 成员 / 机队编辑体验（当前重点是先保证真实可用）
+
+---
+
+## 数据保存位置
+Flight Hub 使用本地 SQLite 数据库保存数据。
+
+主要数据包括：
+- 签派记录
+- PIREP
+- 飞行会话
+- 飞行事件
+- 成员
+- 机队
+- 广播配置
+
+---
+
+## 适合谁使用
+Flight Hub 目前适合：
+- 需要记录飞行过程的虚航用户
+- 想把签派、PIREP、成员、机队数据放在一个桌面工具里管理的人
+- 需要客舱广播播放而不是只看网页 ACARS 的用户
+
+---
+
+## 当前建议使用方式
+如果你现在就要实际使用，建议按这个顺序：
+1. 先建成员 / 机队
+2. 再建签派并绑定成员 / 机队
+3. 连接模拟器飞行
+4. 飞行结束后查看自动生成的 PIREP
+5. 在总览里查看累计数据
