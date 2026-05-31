@@ -1,0 +1,2 @@
+Flight Hub build resources placeholder.
+Provide icon.ico, icon.icns, and icon.png before packaging.
