@@ -14,7 +14,12 @@ function createEmptyDispatch(): DispatchFlight {
     fuelKg: 0,
     source: 'manual',
     status: 'draft',
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    pilotMemberId: '',
+    fleetAircraftId: '',
+    simbriefUsername: '',
+    simbriefUserId: '',
+    simbriefNavlogId: ''
   };
 }
 
@@ -104,7 +109,12 @@ export function DispatchPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
             ['flightNumber', '航班号'],
             ['departure', '起飞机场'],
             ['arrival', '目的机场'],
-            ['alternate', '备降机场']
+            ['alternate', '备降机场'],
+            ['simbriefUsername', 'SimBrief 用户名'],
+            ['simbriefUserId', 'SimBrief 用户 ID'],
+            ['simbriefNavlogId', 'SimBrief Navlog ID'],
+            ['pilotMemberId', '成员 ID'],
+            ['fleetAircraftId', '机队 ID']
           ].map(([key, label]) => (
             <label key={key} className="space-y-2 text-sm">
               <span className="text-slate-400">{label}</span>

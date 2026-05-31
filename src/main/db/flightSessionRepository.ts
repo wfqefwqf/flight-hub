@@ -19,6 +19,8 @@ function mapSession(row: any): FlightSession {
     blockOnAt: optionalString(row.block_on_at),
     departureIcao: optionalString(row.departure_icao),
     arrivalIcao: optionalString(row.arrival_icao),
+    pilotMemberId: optionalString(row.pilot_member_id),
+    fleetAircraftId: optionalString(row.fleet_aircraft_id),
     maxAltitudeFt: Number(row.max_altitude_ft ?? 0),
     lastPhase: row.last_phase,
     landingRateFpm: row.landing_rate_fpm ?? undefined,
@@ -53,6 +55,8 @@ function normalizeSession(session: FlightSession) {
     blockOnAt: session.blockOnAt ?? null,
     departureIcao: session.departureIcao ?? null,
     arrivalIcao: session.arrivalIcao ?? null,
+    pilotMemberId: session.pilotMemberId ?? null,
+    fleetAircraftId: session.fleetAircraftId ?? null,
     landingRateFpm: session.landingRateFpm ?? null,
     fuelStartKg: session.fuelStartKg ?? null,
     fuelEndKg: session.fuelEndKg ?? null,
@@ -77,11 +81,11 @@ export class FlightSessionRepository {
     this.db.prepare(`
       INSERT INTO flight_sessions (
         id, simulator_source, callsign, aircraft_type, started_at, ended_at, block_off_at, takeoff_at,
-        landing_at, block_on_at, departure_icao, arrival_icao, max_altitude_ft, last_phase,
+        landing_at, block_on_at, departure_icao, arrival_icao, pilot_member_id, fleet_aircraft_id, max_altitude_ft, last_phase,
         landing_rate_fpm, fuel_start_kg, fuel_end_kg, fuel_used_kg, status
       ) VALUES (
         @id, @simulatorSource, @callsign, @aircraftType, @startedAt, @endedAt, @blockOffAt, @takeoffAt,
-        @landingAt, @blockOnAt, @departureIcao, @arrivalIcao, @maxAltitudeFt, @lastPhase,
+        @landingAt, @blockOnAt, @departureIcao, @arrivalIcao, @pilotMemberId, @fleetAircraftId, @maxAltitudeFt, @lastPhase,
         @landingRateFpm, @fuelStartKg, @fuelEndKg, @fuelUsedKg, @status
       )
     `).run(normalizeSession(session) as any);
@@ -101,6 +105,8 @@ export class FlightSessionRepository {
         block_on_at = @blockOnAt,
         departure_icao = @departureIcao,
         arrival_icao = @arrivalIcao,
+        pilot_member_id = @pilotMemberId,
+        fleet_aircraft_id = @fleetAircraftId,
         max_altitude_ft = @maxAltitudeFt,
         last_phase = @lastPhase,
         landing_rate_fpm = @landingRateFpm,
@@ -162,7 +168,13 @@ export class FlightSessionRepository {
     return pirep;
   }
 
-  getDashboardStats() {
+  savePirepNotes(id: string, notes: string) {
+    this.db.prepare('UPDATE pireps SET notes = ? WHERE id = ?').run(notes, id);
+    const row = this.db.prepare('SELECT * FROM pireps WHERE id = ?').get(id);
+    return row ? mapPirep(row) : null;
+  }
+
+  getDashboardStats(memberRanking: import('@shared/types').Member[] = []) {
     const todayFlightsRow = this.db.prepare(`SELECT COUNT(*) as count FROM pireps WHERE date(submitted_at) = date('now', 'localtime')`).get() as { count: number };
     const totalHoursRow = this.db.prepare('SELECT COALESCE(SUM(block_time_minutes), 0) as totalMinutes FROM pireps').get() as { totalMinutes: number };
 
@@ -170,7 +182,7 @@ export class FlightSessionRepository {
       todayFlights: todayFlightsRow.count,
       totalHours: Number((totalHoursRow.totalMinutes / 60).toFixed(1)),
       recentPireps: this.getRecentCompletedPireps(5),
-      memberRanking: []
+      memberRanking
     };
   }
 }

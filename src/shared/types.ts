@@ -58,6 +58,11 @@ export interface DispatchFlight {
   source: 'manual' | 'simbrief';
   status: 'draft' | 'active' | 'completed';
   createdAt: string;
+  pilotMemberId?: string;
+  fleetAircraftId?: string;
+  simbriefUsername?: string;
+  simbriefUserId?: string;
+  simbriefNavlogId?: string;
 }
 
 export interface PirepRecord {
@@ -112,6 +117,8 @@ export interface FlightSession {
   blockOnAt?: string;
   departureIcao?: string;
   arrivalIcao?: string;
+  pilotMemberId?: string;
+  fleetAircraftId?: string;
   maxAltitudeFt: number;
   lastPhase: FlightPhase;
   landingRateFpm?: number;

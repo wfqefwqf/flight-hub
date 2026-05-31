@@ -7,6 +7,9 @@ import { CabinService } from '../services/cabinService';
 import { seedAnnouncements } from '../services/seedData';
 import { FlightSessionRepository } from '../db/flightSessionRepository';
 import { DispatchRepository } from '../db/dispatchRepository';
+import { MemberRepository } from '../db/memberRepository';
+import { FleetRepository } from '../db/fleetRepository';
+import { importDispatchFromSimBrief } from '../services/simbriefService';
 
 interface RegisterDeps {
   db: AppDatabase;
@@ -31,32 +34,32 @@ export function registerIpcHandlers({ db, simBridgeService, getWindow }: Registe
   const cabinService = new CabinService();
   const sessionRepository = new FlightSessionRepository(db);
   const dispatchRepository = new DispatchRepository(db);
+  const memberRepository = new MemberRepository(db);
+  const fleetRepository = new FleetRepository(db);
   ipcMain.handle('app:get-snapshot', (): FlightHubSnapshot => ({
     tracking: simBridgeService.getState(),
     currentSession: simBridgeService.getCurrentSession(),
     dispatches: dispatchRepository.list(),
     pireps: sessionRepository.getRecentCompletedPireps(20),
-    members: [],
-    fleet: [],
+    members: memberRepository.list(),
+    fleet: fleetRepository.list(),
     announcements: readTable(db, 'announcements', seedAnnouncements),
-    dashboard: sessionRepository.getDashboardStats()
+    dashboard: sessionRepository.getDashboardStats(memberRepository.list())
   }));
 
   ipcMain.handle('tracking:set-source', async (_event, source) => simBridgeService.setSource(source));
 
   ipcMain.handle('tracking:update-config', (_event, config: Partial<SimConnectionConfig>) => simBridgeService.updateConfig(config));
 
-  ipcMain.handle('dispatch:import-simbrief', (_event, payload: Partial<DispatchFlight>) => {
+  ipcMain.handle('dispatch:import-simbrief', async (_event, payload: Partial<DispatchFlight>) => {
+    const imported = await importDispatchFromSimBrief(payload);
     const draft = dispatchRepository.createDraft();
     const merged: DispatchFlight = {
       ...draft,
-      flightNumber: payload.flightNumber ?? draft.flightNumber,
-      departure: payload.departure ?? draft.departure,
-      arrival: payload.arrival ?? draft.arrival,
-      alternate: payload.alternate ?? draft.alternate,
-      route: payload.route ?? draft.route,
-      payloadKg: payload.payloadKg ?? draft.payloadKg,
-      fuelKg: payload.fuelKg ?? draft.fuelKg,
+      ...imported,
+      simbriefUsername: payload.simbriefUsername,
+      simbriefUserId: payload.simbriefUserId,
+      simbriefNavlogId: payload.simbriefNavlogId,
       source: 'simbrief'
     };
     return dispatchRepository.save(merged);
@@ -87,8 +90,26 @@ export function registerIpcHandlers({ db, simBridgeService, getWindow }: Registe
     return result.filePath;
   });
 
-  ipcMain.handle('pirep:save', () => {
-    throw new Error('PIREP submission is hidden until real flight session tracking is implemented');
+  ipcMain.handle('pirep:save', (_event, payload: PirepRecord) => {
+    return sessionRepository.savePirepNotes(payload.id, payload.notes ?? '');
+  });
+
+  ipcMain.handle('members:save', (_event, payload) => {
+    return memberRepository.save(payload);
+  });
+
+  ipcMain.handle('members:remove', (_event, id: string) => {
+    memberRepository.remove(id);
+    return true;
+  });
+
+  ipcMain.handle('fleet:save', (_event, payload) => {
+    return fleetRepository.save(payload);
+  });
+
+  ipcMain.handle('fleet:remove', (_event, id: string) => {
+    fleetRepository.remove(id);
+    return true;
   });
 
   ipcMain.handle('cabin:play', (_event, payload: CabinAnnouncement) => {

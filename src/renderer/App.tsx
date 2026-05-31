@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
-import { Plane, Radio, ScrollText, Volume2 } from 'lucide-react';
+import { Plane, Radio, ScrollText, Users, Volume2 } from 'lucide-react';
 import { useAppStore } from './store/useAppStore';
 import { TrackingPage } from './pages/TrackingPage';
 import { CabinPage } from './pages/CabinPage';
@@ -8,12 +8,14 @@ import { AvailabilityPage } from './pages/AvailabilityPage';
 import { PirepPage } from './pages/PirepPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DispatchPage } from './pages/DispatchPage';
+import { ManagementPage } from './pages/ManagementPage';
 
 const navItems = [
   { to: '/', label: '总览', icon: Plane },
   { to: '/tracking', label: '航班追踪', icon: Radio },
   { to: '/dispatch', label: '签派', icon: ScrollText },
   { to: '/pirep', label: 'PIREP', icon: ScrollText },
+  { to: '/management', label: '成员/机队', icon: Users },
   { to: '/cabin', label: '客舱语音', icon: Volume2 }
 ];
 
@@ -90,6 +92,7 @@ export default function App() {
             <Route path="/tracking" element={<TrackingPage snapshot={snapshot} />} />
             <Route path="/dispatch" element={<DispatchPage snapshot={snapshot} />} />
             <Route path="/pirep" element={<PirepPage snapshot={snapshot} />} />
+            <Route path="/management" element={<ManagementPage snapshot={snapshot} />} />
             <Route path="/cabin" element={<CabinPage snapshot={snapshot} />} />
             <Route path="/availability" element={<AvailabilityPage snapshot={snapshot} />} />
           </Routes>

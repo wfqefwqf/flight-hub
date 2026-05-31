@@ -2,7 +2,9 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type {
   CabinAnnouncement,
   DispatchFlight,
+  FleetAircraft,
   FlightHubSnapshot,
+  Member,
   PirepRecord,
   SimConnectionConfig,
   SimSource
@@ -16,6 +18,10 @@ const api = {
   saveDispatch: (payload: DispatchFlight) => ipcRenderer.invoke('dispatch:save', payload),
   exportDispatch: (id: string) => ipcRenderer.invoke('dispatch:export', id),
   savePirep: (payload: PirepRecord) => ipcRenderer.invoke('pirep:save', payload),
+  saveMember: (payload: Member) => ipcRenderer.invoke('members:save', payload),
+  removeMember: (id: string) => ipcRenderer.invoke('members:remove', id),
+  saveFleetAircraft: (payload: FleetAircraft) => ipcRenderer.invoke('fleet:save', payload),
+  removeFleetAircraft: (id: string) => ipcRenderer.invoke('fleet:remove', id),
   playAnnouncement: (payload: CabinAnnouncement) => ipcRenderer.invoke('cabin:play', payload),
   onTrackingUpdated: (listener: (tracking: FlightHubSnapshot['tracking']) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, tracking: FlightHubSnapshot['tracking']) => listener(tracking);

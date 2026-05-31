@@ -9,7 +9,11 @@ declare global {
       importSimBrief: (payload: Partial<import('@shared/types').DispatchFlight>) => Promise<import('@shared/types').DispatchFlight>;
       saveDispatch: (payload: import('@shared/types').DispatchFlight) => Promise<import('@shared/types').DispatchFlight>;
       exportDispatch: (id: string) => Promise<string | null>;
-      savePirep: (payload: import('@shared/types').PirepRecord) => Promise<import('@shared/types').PirepRecord>;
+      savePirep: (payload: import('@shared/types').PirepRecord) => Promise<import('@shared/types').PirepRecord | null>;
+      saveMember: (payload: import('@shared/types').Member) => Promise<import('@shared/types').Member>;
+      removeMember: (id: string) => Promise<boolean>;
+      saveFleetAircraft: (payload: import('@shared/types').FleetAircraft) => Promise<import('@shared/types').FleetAircraft>;
+      removeFleetAircraft: (id: string) => Promise<boolean>;
       playAnnouncement: (payload: import('@shared/types').CabinAnnouncement) => Promise<{ ok: boolean; message: string; mediaDirectory?: string }>;
       onTrackingUpdated: (listener: (tracking: import('@shared/types').FlightTrackingState) => void) => () => void;
     };

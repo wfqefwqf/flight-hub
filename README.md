@@ -44,25 +44,41 @@ Flight Hub 是一个基于 **Electron + React + TypeScript + Tailwind + SQLite**
 - 累计小时
 - 当前活动会话
 - 最近 PIREP 列表
+- 真实成员排行（来自 `members` 表）
 
 关键实现：
 - `src/main/db/flightSessionRepository.ts`
+- `src/main/ipc/registerHandlers.ts`
 - `src/renderer/pages/DashboardPage.tsx`
 
-### 4. Dispatch 真实 CRUD 第一阶段
+### 4. Dispatch 真实 CRUD + SimBrief 导入
 当前已支持：
 - 新建签派草稿
 - 编辑签派单
 - 保存到真实 SQLite `dispatches` 表
 - 导出 `dispatch.json`
-- 以 `simbrief` 来源创建导入草稿（当前不是远程 SimBrief API 真导入，而是结构已打通的本地草稿流程）
+- 通过 **SimBrief 用户名 / userId / navlogId** 调用官方 fetcher API 导入签派数据
+- 在 Dispatch 中绑定成员 ID / 机队 ID，供后续会话继承
 
 关键实现：
 - `src/main/db/dispatchRepository.ts`
+- `src/main/services/simbriefService.ts`
 - `src/main/ipc/registerHandlers.ts`
 - `src/renderer/pages/DispatchPage.tsx`
 
-### 5. 客舱语音（当前最小可用版）
+### 5. 成员 / 机队管理真实 CRUD
+当前已支持：
+- 成员新增 / 删除 / 小时显示
+- 机队新增 / 删除 / 状态维护 / 小时显示
+- 会话完成后，若 session 已绑定成员与机队，会自动累计飞行小时
+
+关键实现：
+- `src/main/db/memberRepository.ts`
+- `src/main/db/fleetRepository.ts`
+- `src/main/services/simBridgeService.ts`
+- `src/renderer/pages/ManagementPage.tsx`
+
+### 6. 客舱语音（当前最小可用版）
 当前已支持：
 - 本地 `WAV/MP3` 媒体文件播放
 - 自动创建运行时媒体目录
@@ -82,12 +98,10 @@ Flight Hub 是一个基于 **Electron + React + TypeScript + Tailwind + SQLite**
 ## 当前还未完成的需求
 以下需求仍在后续开发中，当前仓库不会把它们伪装成“已可用”：
 
-- SimBrief 远程 API 真导入
 - 自动 fuel burn 统计
-- 自动 departure / arrival ICAO 识别
-- 成员管理真实 CRUD
-- 机队管理真实 CRUD
-- 成员排行真实聚合
+- 更准确的自动 departure / arrival ICAO 识别
+- 完整的 flight session 与 dispatch 生命周期联动
+- 成员 / 机队编辑（当前已支持新增与删除，后续会补更完整编辑体验）
 - TTS 广播
 - 客舱广播自动触发
 - XPUIPC 接入
@@ -171,6 +185,27 @@ npm run dist
 
 ---
 
+## Dispatch / 成员 / 机队联动测试
+
+### SimBrief 导入
+当前 Dispatch 页支持填写以下任一参数后导入：
+- `SimBrief 用户名`
+- `SimBrief 用户 ID`
+- `SimBrief Navlog ID`
+
+导入成功后会把结果保存为真实签派记录。
+
+### 成员 / 机队绑定
+当前 Dispatch 页支持填写：
+- `成员 ID`
+- `机队 ID`
+
+当该签派被标记为 active 并被新的 flight session 继承后，会话完成时将自动累计：
+- 成员飞行小时
+- 机队飞行小时
+
+---
+
 ## 客舱媒体目录
 
 客舱语音的本地媒体文件会从 Electron `userData` 目录下的：
@@ -210,9 +245,9 @@ flight-hub.db
 ## 当前开发方向
 
 当前开发优先级：
-1. 成员 / 机队管理真实 CRUD
-2. SimBrief 真导入
-3. 更准确的自动 PIREP 字段生成
+1. 更准确的自动 PIREP 字段生成（fuel / ICAO / landing rate / session 质量）
+2. Dispatch 与 flight session 生命周期联动
+3. 成员 / 机队更完整编辑能力与联动统计
 4. 客舱 TTS 与自动广播
 5. 更完整的 X-Plane 接入方案
 

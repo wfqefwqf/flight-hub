@@ -35,7 +35,12 @@ export function bootstrapDatabase(userDataPath: string) {
       fuel_kg REAL NOT NULL,
       source TEXT NOT NULL,
       status TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      pilot_member_id TEXT,
+      fleet_aircraft_id TEXT,
+      simbrief_username TEXT,
+      simbrief_user_id TEXT,
+      simbrief_navlog_id TEXT
     );
 
     CREATE TABLE IF NOT EXISTS pireps (
@@ -90,6 +95,8 @@ export function bootstrapDatabase(userDataPath: string) {
       block_on_at TEXT,
       departure_icao TEXT,
       arrival_icao TEXT,
+      pilot_member_id TEXT,
+      fleet_aircraft_id TEXT,
       max_altitude_ft REAL NOT NULL DEFAULT 0,
       last_phase TEXT NOT NULL,
       landing_rate_fpm REAL,
@@ -123,7 +130,12 @@ export function bootstrapDatabase(userDataPath: string) {
     { name: 'fuel_kg', sql: 'fuel_kg REAL NOT NULL DEFAULT 0' },
     { name: 'source', sql: 'source TEXT NOT NULL DEFAULT "manual"' },
     { name: 'status', sql: 'status TEXT NOT NULL DEFAULT "draft"' },
-    { name: 'created_at', sql: 'created_at TEXT NOT NULL DEFAULT ""' }
+    { name: 'created_at', sql: 'created_at TEXT NOT NULL DEFAULT ""' },
+    { name: 'pilot_member_id', sql: 'pilot_member_id TEXT' },
+    { name: 'fleet_aircraft_id', sql: 'fleet_aircraft_id TEXT' },
+    { name: 'simbrief_username', sql: 'simbrief_username TEXT' },
+    { name: 'simbrief_user_id', sql: 'simbrief_user_id TEXT' },
+    { name: 'simbrief_navlog_id', sql: 'simbrief_navlog_id TEXT' }
   ]);
 
   ensureColumns(db, 'pireps', [
@@ -174,6 +186,8 @@ export function bootstrapDatabase(userDataPath: string) {
     { name: 'block_on_at', sql: 'block_on_at TEXT' },
     { name: 'departure_icao', sql: 'departure_icao TEXT' },
     { name: 'arrival_icao', sql: 'arrival_icao TEXT' },
+    { name: 'pilot_member_id', sql: 'pilot_member_id TEXT' },
+    { name: 'fleet_aircraft_id', sql: 'fleet_aircraft_id TEXT' },
     { name: 'max_altitude_ft', sql: 'max_altitude_ft REAL NOT NULL DEFAULT 0' },
     { name: 'last_phase', sql: 'last_phase TEXT NOT NULL DEFAULT "preflight"' },
     { name: 'landing_rate_fpm', sql: 'landing_rate_fpm REAL' },

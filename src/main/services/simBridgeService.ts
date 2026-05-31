@@ -6,6 +6,9 @@ import { XPlaneAdapter } from '../sim/xplaneAdapter';
 import type { SimulatorAdapter } from '../sim/types';
 import { seedTrackingState } from './seedData';
 import { FlightSessionRepository } from '../db/flightSessionRepository';
+import { DispatchRepository } from '../db/dispatchRepository';
+import { MemberRepository } from '../db/memberRepository';
+import { FleetRepository } from '../db/fleetRepository';
 
 const defaultConfig: SimConnectionConfig = structuredClone(seedTrackingState.config);
 
@@ -17,7 +20,12 @@ export class SimBridgeService {
   private latestPirep: PirepRecord | null = null;
   private lastEventPhase: FlightPhase | null = null;
 
-  constructor(private readonly sessionRepository: FlightSessionRepository) {
+  constructor(
+    private readonly sessionRepository: FlightSessionRepository,
+    private readonly dispatchRepository: DispatchRepository,
+    private readonly memberRepository: MemberRepository,
+    private readonly fleetRepository: FleetRepository
+  ) {
     this.currentSession = this.sessionRepository.getActiveSession();
   }
 
@@ -35,10 +43,11 @@ export class SimBridgeService {
   private ensureSession(source: SimSource) {
     if (this.currentSession) return this.currentSession;
     const now = new Date().toISOString();
+    const activeDispatch = this.dispatchRepository.getActiveDispatch();
     this.currentSession = this.sessionRepository.createSession({
       id: crypto.randomUUID(),
       simulatorSource: source,
-      callsign: this.tracking.callsign || 'UNKNOWN',
+      callsign: this.tracking.callsign || activeDispatch?.flightNumber || 'UNKNOWN',
       aircraftType: this.tracking.aircraftType || 'UNKNOWN',
       startedAt: now,
       endedAt: undefined,
@@ -46,8 +55,10 @@ export class SimBridgeService {
       takeoffAt: undefined,
       landingAt: undefined,
       blockOnAt: undefined,
-      departureIcao: undefined,
-      arrivalIcao: undefined,
+      departureIcao: activeDispatch?.departure,
+      arrivalIcao: activeDispatch?.arrival,
+      pilotMemberId: activeDispatch?.pilotMemberId,
+      fleetAircraftId: activeDispatch?.fleetAircraftId,
       maxAltitudeFt: 0,
       lastPhase: this.tracking.phase,
       landingRateFpm: undefined,
@@ -100,6 +111,13 @@ export class SimBridgeService {
 
     if (session.status === 'completed') {
       this.latestPirep = this.sessionRepository.completeSessionAndCreatePirep(session);
+      const flownHours = Math.max(0, Number((((Date.parse(session.endedAt ?? now) - Date.parse(session.startedAt)) / 3600000)).toFixed(1)));
+      if (session.pilotMemberId) {
+        this.memberRepository.addHours(session.pilotMemberId, flownHours, session.endedAt ?? now);
+      }
+      if (session.fleetAircraftId) {
+        this.fleetRepository.addHours(session.fleetAircraftId, flownHours);
+      }
       this.currentSession = null;
       this.lastEventPhase = null;
     }

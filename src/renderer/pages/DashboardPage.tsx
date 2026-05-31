@@ -55,6 +55,27 @@ export function DashboardPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
           )}
         </GlassCard>
       </div>
+
+      <GlassCard title="成员排行">
+        {dashboard.memberRanking.length > 0 ? (
+          <div className="space-y-3">
+            {dashboard.memberRanking.map((member, index) => (
+              <div key={member.id} className="flex items-center justify-between rounded-2xl bg-white/5 p-4">
+                <div>
+                  <div className="text-sm text-slate-400">#{index + 1}</div>
+                  <div className="font-medium">{member.name}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-slate-400">{member.rank}</div>
+                  <div className="font-semibold">{member.hours.toFixed(1)} h</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white/5 p-4 text-sm text-slate-400">暂无成员排行数据。</div>
+        )}
+      </GlassCard>
     </div>
   );
 }

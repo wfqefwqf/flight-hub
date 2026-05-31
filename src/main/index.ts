@@ -3,6 +3,9 @@ import path from 'node:path';
 import { registerIpcHandlers } from './ipc/registerHandlers';
 import { bootstrapDatabase } from './db/bootstrap';
 import { FlightSessionRepository } from './db/flightSessionRepository';
+import { DispatchRepository } from './db/dispatchRepository';
+import { MemberRepository } from './db/memberRepository';
+import { FleetRepository } from './db/fleetRepository';
 import { SimBridgeService } from './services/simBridgeService';
 
 let mainWindow: BrowserWindow | null = null;
@@ -36,7 +39,10 @@ function createWindow() {
 app.whenReady().then(() => {
   const db = bootstrapDatabase(app.getPath('userData'));
   const sessionRepository = new FlightSessionRepository(db);
-  simBridgeService = new SimBridgeService(sessionRepository);
+  const dispatchRepository = new DispatchRepository(db);
+  const memberRepository = new MemberRepository(db);
+  const fleetRepository = new FleetRepository(db);
+  simBridgeService = new SimBridgeService(sessionRepository, dispatchRepository, memberRepository, fleetRepository);
   registerIpcHandlers({ db, simBridgeService, getWindow: () => mainWindow });
   simBridgeService.start((tracking) => {
     mainWindow?.webContents.send('tracking:updated', tracking);
