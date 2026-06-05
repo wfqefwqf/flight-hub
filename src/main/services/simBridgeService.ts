@@ -2,7 +2,7 @@ import type { FlightPhase, FlightSession, FlightTrackingState, PirepRecord, SimC
 import { detectFlightPhase } from '../sim/phase';
 import { MsfsAdapter } from '../sim/msfsAdapter';
 import { XPlaneAdapter } from '../sim/xplaneAdapter';
-import type { SimulatorAdapter } from '../sim/types';
+import type { SimulatorAdapter } from '../sim/adapter';
 import { seedTrackingState } from './seedData';
 import { FlightSessionRepository } from '../db/flightSessionRepository';
 import { DispatchRepository } from '../db/dispatchRepository';
@@ -178,7 +178,7 @@ export class SimBridgeService {
           aircraftType: sample.aircraftType,
           phase,
           position: sample.position,
-          track: [...this.tracking.track.slice(-199), { ...sample.position, phase }]
+          track: this.tracking.track.concat({ ...sample.position, phase })
         };
 
         const activeDispatch = this.dispatchRepository.getActiveDispatch();

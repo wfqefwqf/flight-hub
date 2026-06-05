@@ -1,5 +1,5 @@
 import type { SimConnectionConfig } from '@shared/types';
-import type { AdapterSample, SimulatorAdapter } from './types';
+import type { AdapterSample, SimulatorAdapter } from './adapter';
 
 const dynamicImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
 

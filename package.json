@@ -27,6 +27,7 @@
     "better-sqlite3": "^11.1.2",
     "clsx": "^2.1.1",
     "electron-is-dev": "^3.0.1",
+    "gcoord": "^1.0.7",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.453.0",
     "msfs-simconnect-api-wrapper": "^4.7.0",
@@ -72,21 +73,21 @@
       "target": [
         "nsis"
       ],
-      "icon": "ycpbs-fbxoo-001.ico"
+      "icon": "resources/icons/icon.ico"
     },
     "mac": {
       "target": [
         "dmg"
       ],
       "category": "public.app-category.utilities",
-      "icon": "adaj0-fvx6m.icns"
+      "icon": "resources/icons/icon.icns"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
       "category": "Utility",
-      "icon": "9ec6851c96e9c124676382cdddc5f167.png"
+      "icon": "resources/icons/icon.png"
     },
     "extraMetadata": {
       "main": "dist/main/main/index.js"

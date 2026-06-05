@@ -1,6 +1,6 @@
 import dgram from 'node:dgram';
 import type { SimConnectionConfig } from '@shared/types';
-import type { AdapterSample, SimulatorAdapter } from './types';
+import type { AdapterSample, SimulatorAdapter } from './adapter';
 
 const XPLANE_DEFAULT_COMMAND_PORT = 49000;
 const BEACON_MULTICAST_ADDR = '239.255.1.1';

@@ -12,9 +12,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.tsbuildinfo
-resources/icon.ico
-resources/icon.icns
-resources/icon.png
+scripts/
 *.db
 *.sqlite
 *.sqlite3
