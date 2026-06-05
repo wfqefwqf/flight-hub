@@ -7,9 +7,6 @@ export function AvailabilityPage({ snapshot }: { snapshot: FlightHubSnapshot }) 
     <Stack spacing={3}>
       <Box>
         <Typography variant="h4" fontWeight={700}>当前可用能力</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          当前页面已改为 Material Design 3 视觉风格，只保留真实接通的能力说明。
-        </Typography>
       </Box>
 
       <Grid container spacing={3}>

@@ -11,9 +11,6 @@ export function DashboardPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
     <Stack spacing={3}>
       <Box>
         <Typography variant="h4" fontWeight={700}>运行总览</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          基于真实数据库会话、PIREP、成员和机队数据的 Material Design 3 总览页。
-        </Typography>
       </Box>
 
       <Grid container spacing={2}>

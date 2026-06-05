@@ -26,9 +26,6 @@ export function TrackingPage({ snapshot }: { snapshot: FlightHubSnapshot }) {
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
         <Box>
           <Typography variant="h4" fontWeight={700}>航班追踪</Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-            当前使用 Material Design 3 布局展示 MSFS / X-Plane 实时飞行数据与轨迹。
-          </Typography>
         </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }}>
             <Typography variant="body2" color="text.secondary">数据源</Typography>

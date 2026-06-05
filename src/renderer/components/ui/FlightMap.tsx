@@ -1,55 +1,71 @@
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet';
 import type { FlightHubSnapshot } from '@shared/types';
-import gcoord from 'gcoord';
 import L from 'leaflet';
 
 interface FlightMapProps {
   tracking: FlightHubSnapshot['tracking'];
 }
 
-function toGCJ02(lng: number, lat: number): [number, number] {
-  const result = gcoord.transform([lng, lat], gcoord.WGS84, gcoord.GCJ02);
-  return [result[0], result[1]];
-}
-
 function MapController({ center }: { center: L.LatLngTuple }) {
   const map = useMap();
+  const followingRef = useRef(true);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearResumeTimer = useCallback(() => {
+    if (resumeTimerRef.current !== null) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
-    map.setView(center, map.getZoom(), { animate: false });
+    const onDragStart = () => {
+      followingRef.current = false;
+      clearResumeTimer();
+    };
+    const onDragEnd = () => {
+      clearResumeTimer();
+      resumeTimerRef.current = setTimeout(() => {
+        followingRef.current = true;
+      }, 5000);
+    };
+
+    map.on('dragstart', onDragStart);
+    map.on('dragend', onDragEnd);
+
+    return () => {
+      map.off('dragstart', onDragStart);
+      map.off('dragend', onDragEnd);
+      clearResumeTimer();
+    };
+  }, [map, clearResumeTimer]);
+
+  useEffect(() => {
+    if (followingRef.current) {
+      map.setView(center, map.getZoom(), { animate: false });
+    }
   }, [map, center[0], center[1]]);
+
   return null;
 }
 
-const DEFAULT_CENTER_GCJ02: L.LatLngTuple = (() => {
-  const [lng, lat] = gcoord.transform([121.4737, 31.2304], gcoord.WGS84, gcoord.GCJ02);
-  return [lat, lng];
-})();
+const DEFAULT_CENTER: L.LatLngTuple = [31.2304, 121.4737];
 
 export const FlightMap = memo(function FlightMap({ tracking }: FlightMapProps) {
   const center = useMemo((): L.LatLngTuple => {
     const position = tracking.position;
-    if (position) {
-      const [gcjLng, gcjLat] = toGCJ02(position.lon, position.lat);
-      return [gcjLat, gcjLng];
-    }
-    return DEFAULT_CENTER_GCJ02;
+    return position ? [position.lat, position.lon] : DEFAULT_CENTER;
   }, [tracking.position?.lat, tracking.position?.lon]);
 
   const polylinePositions = useMemo(
-    () =>
-      tracking.track.map((point) => {
-        const [gcjLng, gcjLat] = toGCJ02(point.lon, point.lat);
-        return [gcjLat, gcjLng] as L.LatLngTuple;
-      }),
+    () => tracking.track.map((point) => [point.lat, point.lon] as L.LatLngTuple),
     [tracking.track]
   );
 
   const markerPosition = useMemo((): L.LatLngTuple | null => {
     const position = tracking.position;
-    if (!position) return null;
-    const [gcjLng, gcjLat] = toGCJ02(position.lon, position.lat);
-    return [gcjLat, gcjLng];
+    return position ? [position.lat, position.lon] : null;
   }, [tracking.position?.lat, tracking.position?.lon]);
 
   return (
@@ -64,9 +80,9 @@ export const FlightMap = memo(function FlightMap({ tracking }: FlightMapProps) {
     >
       <MapController center={center} />
       <TileLayer
-        url="https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}"
-        subdomains={['1', '2', '3', '4']}
-        attribution="&copy; 高德地图"
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        attribution="&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+        maxZoom={18}
       />
       <Polyline positions={polylinePositions} pathOptions={{ color: '#7fcfff', weight: 4 }} />
       {markerPosition && <Marker position={markerPosition} />}
