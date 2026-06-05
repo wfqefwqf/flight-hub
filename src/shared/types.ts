@@ -9,7 +9,7 @@ export type FlightPhase =
   | 'landing'
   | 'parked';
 
-export type SimSource = 'MSFS' | 'XPLANE' | 'MOCK';
+export type SimSource = 'MSFS' | 'XPLANE';
 export type FlightSessionStatus = 'active' | 'completed' | 'aborted';
 
 export interface AircraftPosition {
@@ -29,6 +29,7 @@ export interface FlightTrackPoint extends AircraftPosition {
 export interface SimConnectionConfig {
   msfsHost: string;
   msfsPort: number;
+  xplaneHost: string;
   xplaneLocalPort: number;
   autoReconnect: boolean;
 }

@@ -1,6 +1,5 @@
 import type { FlightPhase, FlightSession, FlightTrackingState, PirepRecord, SimConnectionConfig, SimSource } from '@shared/types';
 import { detectFlightPhase } from '../sim/phase';
-import { MockAdapter } from '../sim/mockAdapter';
 import { MsfsAdapter } from '../sim/msfsAdapter';
 import { XPlaneAdapter } from '../sim/xplaneAdapter';
 import type { SimulatorAdapter } from '../sim/types';
@@ -37,8 +36,7 @@ export class SimBridgeService {
 
   private createAdapter(source: SimSource) {
     if (source === 'MSFS') return new MsfsAdapter(this.tracking.config);
-    if (source === 'XPLANE') return new XPlaneAdapter(this.tracking.config);
-    return new MockAdapter();
+    return new XPlaneAdapter(this.tracking.config);
   }
 
   private ensureSession(source: SimSource) {
@@ -210,7 +208,7 @@ export class SimBridgeService {
     return this.connectTo(source);
   }
 
-  updateConfig(config: Partial<SimConnectionConfig>) {
+  async updateConfig(config: Partial<SimConnectionConfig>) {
     this.tracking = {
       ...this.tracking,
       config: {
@@ -220,6 +218,11 @@ export class SimBridgeService {
       }
     };
     this.onUpdate(this.tracking);
+
+    if (this.adapter) {
+      return this.connectTo(this.tracking.source);
+    }
+
     return this.tracking;
   }
 

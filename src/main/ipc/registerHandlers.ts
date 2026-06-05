@@ -4,7 +4,7 @@ import type { AppDatabase } from '../db/bootstrap';
 import type { CabinAnnouncement, DispatchFlight, FlightHubSnapshot, PirepRecord, SimConnectionConfig } from '@shared/types';
 import { SimBridgeService } from '../services/simBridgeService';
 import { CabinService } from '../services/cabinService';
-import { seedAnnouncements } from '../services/seedData';
+import { emptyAnnouncements } from '../services/seedData';
 import { FlightSessionRepository } from '../db/flightSessionRepository';
 import { DispatchRepository } from '../db/dispatchRepository';
 import { MemberRepository } from '../db/memberRepository';
@@ -17,18 +17,27 @@ interface RegisterDeps {
   getWindow: () => BrowserWindow | null;
 }
 
-const upsert = (db: AppDatabase, table: string, id: string, data: unknown) => {
-  db.prepare(`INSERT INTO ${table} (id, data) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET data=excluded.data`).run(id, JSON.stringify(data));
-};
+function mapAnnouncement(row: any): CabinAnnouncement {
+  return {
+    id: row.id,
+    phase: row.phase,
+    title: row.title,
+    language: row.language,
+    mode: row.mode,
+    autoPlay: !!row.auto_play,
+    text: row.text,
+    mediaFile: row.media_file ?? undefined
+  };
+}
 
-const readTable = <T>(db: AppDatabase, table: string, seed: T[]): T[] => {
-  const rows = db.prepare(`SELECT data FROM ${table}`).all() as Array<{ data: string }>;
-  if (rows.length === 0) {
-    seed.forEach((item: any) => upsert(db, table, item.id, item));
-    return seed;
+function listAnnouncements(db: AppDatabase) {
+  const rows = db.prepare('SELECT * FROM announcements ORDER BY title ASC').all();
+  if (rows.length > 0) {
+    return rows.map(mapAnnouncement);
   }
-  return rows.map((row) => JSON.parse(row.data) as T);
-};
+
+  return emptyAnnouncements;
+}
 
 export function registerIpcHandlers({ db, simBridgeService, getWindow }: RegisterDeps) {
   const cabinService = new CabinService();
@@ -43,13 +52,13 @@ export function registerIpcHandlers({ db, simBridgeService, getWindow }: Registe
     pireps: sessionRepository.getRecentCompletedPireps(20),
     members: memberRepository.list(),
     fleet: fleetRepository.list(),
-    announcements: readTable(db, 'announcements', seedAnnouncements),
+    announcements: listAnnouncements(db),
     dashboard: sessionRepository.getDashboardStats(memberRepository.list())
   }));
 
   ipcMain.handle('tracking:set-source', async (_event, source) => simBridgeService.setSource(source));
 
-  ipcMain.handle('tracking:update-config', (_event, config: Partial<SimConnectionConfig>) => simBridgeService.updateConfig(config));
+  ipcMain.handle('tracking:update-config', async (_event, config: Partial<SimConnectionConfig>) => simBridgeService.updateConfig(config));
 
   ipcMain.handle('dispatch:import-simbrief', async (_event, payload: Partial<DispatchFlight>) => {
     const imported = await importDispatchFromSimBrief(payload);

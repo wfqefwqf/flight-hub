@@ -60,6 +60,18 @@ function ensureModernPirepsTable(db: Database) {
   `);
 }
 
+function purgeLegacyDemoData(db: Database) {
+  db.exec(`
+    DELETE FROM dispatches WHERE id IN ('d1');
+    DELETE FROM pireps WHERE id IN ('p1');
+    DELETE FROM members WHERE id IN ('m1', 'm2', 'm3');
+    DELETE FROM fleet WHERE id IN ('f1', 'f2');
+    DELETE FROM announcements WHERE id IN ('a1', 'a2');
+    DELETE FROM flight_events WHERE session_id IN (SELECT id FROM flight_sessions WHERE simulator_source NOT IN ('MSFS', 'XPLANE'));
+    DELETE FROM flight_sessions WHERE simulator_source NOT IN ('MSFS', 'XPLANE');
+  `);
+}
+
 export function bootstrapDatabase(userDataPath: string) {
   const dbPath = path.join(userDataPath, 'flight-hub.db');
   const db = new Database(dbPath);
@@ -162,6 +174,7 @@ export function bootstrapDatabase(userDataPath: string) {
   `);
 
   ensureModernPirepsTable(db);
+  purgeLegacyDemoData(db);
 
   ensureColumns(db, 'dispatches', [
     { name: 'flight_number', sql: 'flight_number TEXT NOT NULL DEFAULT ""' },
@@ -218,7 +231,7 @@ export function bootstrapDatabase(userDataPath: string) {
   ]);
 
   ensureColumns(db, 'flight_sessions', [
-    { name: 'simulator_source', sql: 'simulator_source TEXT NOT NULL DEFAULT "MOCK"' },
+    { name: 'simulator_source', sql: 'simulator_source TEXT NOT NULL DEFAULT "MSFS"' },
     { name: 'callsign', sql: 'callsign TEXT NOT NULL DEFAULT "UNKNOWN"' },
     { name: 'aircraft_type', sql: 'aircraft_type TEXT NOT NULL DEFAULT "UNKNOWN"' },
     { name: 'started_at', sql: 'started_at TEXT NOT NULL DEFAULT ""' },

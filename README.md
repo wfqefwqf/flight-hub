@@ -89,13 +89,20 @@ Flight Hub 通过 SimConnect 采样数据。
 
 在 Flight Hub 的“航班追踪”页面可以修改连接参数。
 
-### X-Plane
-当前通过 **UDP Data Output** 接收数据。
+### X-Plane（推荐）
+当前通过 **UDP RREF（Reasonable Response）协议** 接收实时飞行数据。
 
-默认端口：
+默认配置：
 - Local UDP Port: `49000`
+- IP: `127.0.0.1`
 
-使用前请在 X-Plane 中开启对应的数据输出，并发送到本机端口。
+RREF 会自动请求以下关键数据：
+- 经纬度、高度、地速、航向
+- 垂直速度、接地状态、燃油量
+
+在启用了 DATA 输出的情况下，RREF 无响应时会自动回退到 **DATA Output** 模式，兼容 XP11 / XP12。
+
+使用前请在 X-Plane 的 Quick Setup 页面选择本机 IP，确保 UDP 数据能够发出。
 
 ---
 
@@ -188,7 +195,6 @@ Flight Hub 通过 SimConnect 采样数据。
 - 更完善的 SimBrief 导入兼容性
 - TTS 客舱广播
 - 自动广播触发
-- 更完整的 X-Plane 接入方式
 - 成员 / 机队编辑体验（当前重点是先保证真实可用）
 
 ---
